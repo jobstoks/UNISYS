@@ -25,8 +25,8 @@ function [geom,Vq,hearts_exp]=UNISYS_Main(geom,beats,fieldnames_input,fieldnames
 %       be entered here. This overrules the values in the beats-struct, and
 %       will lead to a reverse transformation from UNISYS to the
 %       corresponding heart (instead of the other way around).
-%       - clrmap: Struct containing the following optional fields with information on the
-%           color maps that should be used.
+%       - clrmap: Struct containing the following optional fields with 
+%               visualization options and save options:
 %               - numplotsperrow: number of UNISYS plots per row (so columns) 
 %               that should be visualized per figure.
 %               - numrows: number of rows that should be shown per figure.
@@ -48,7 +48,16 @@ function [geom,Vq,hearts_exp]=UNISYS_Main(geom,beats,fieldnames_input,fieldnames
 %               - isolines: boolean for isolines between different colors
 %               on/off. Only works for hearts.
 %               - alpha: boolean for visible edges ('put a net over the
-%               heart'). Only works for heart, not for bullseye.    
+%               heart'). Only works for heart, not for bullseye.   
+%               - save: struct inside dev_opts containing multiple save options:
+%                   - savefile: if set to 1, files should be saved. 
+%                   - fig: save matlab .fig? If yes, set to 1.
+%                   - png: save .png? If yes, set to 1.
+%                   - filename: set filename for figure/png to save.
+%                   If only a filename is specified but no full path,
+%                   results will be saved to current folder.
+%                   
+% 
 % 
 % Optional outputs:
 % geom: struct containing all new fields, such as

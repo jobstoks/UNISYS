@@ -20,34 +20,49 @@ function [Vq_exp,hearts]=plot_BullsEye_And_Hearts(bullseye,hearts,numplotsperrow
 %       - geom: Heart geometry. See UNISYS_main.
 %       - title: String, containing the title of the bullseye plot.
 %    numplotsperrow: number of UNISYS bullseyes to be displayed in each row. 
-%    dev_opts: Optional struct containing many possible visualization options. Fields:
-%         - clrmap: Struct containing the following optional fields with information on the
-%         color maps that should be used.
-%         - steps: integer containing the width of bins in the
-%         colormap, e.g. 10ms.
-%         - map: type of colormap that should be used. String, e.g. 'hot' or 'cool'. If set to 'custom',
-%         see map_act_spec.
-%         - map_spec: m-by-3 matrix containing color codes for which a custom color
-%         map is made. E.g. [1 1 1; 0 0 0; 1 0 0] will produce a color map with a gradient
-%         from white to black to red.
-%         - flipud: should the color map be flipped upside down? If yes, set to 1.
-%         - lims: k-by-2 matrix with k being the number of beats in the beats-struct.
-%         Each row contains the minimum and maximum value to display for each beat.
-%         - identical: only works if lims is not manually set. If set
-%         to 1, all beats will have the same color limits.
-%         - symmetrical: only works if lims is not manually set. If
-%         set to 1, colormaps will be made symmetrical (so the start and
-%         the end of the colormap will have the same color).
-%         - isolines: boolean for isolines between different colors
-%             on/off. Only works for hearts.
-%             - alpha: boolean for visible edges ('put a net over the
-%                 heart'). Only works for heart, not for bullseye.
+% dev_opts: Optional struct containing many possible visualization options. Fields:
+%       - Vq: Cell of length k (number of beats). If you have a pre-detmermined
+%       or pre-calculated grid that should be visualized by UNISYS, it can
+%       be entered here. This overrules the values in the beats-struct, and
+%       will lead to a reverse transformation from UNISYS to the
+%       corresponding heart (instead of the other way around).
+%       - clrmap: Struct containing the following optional fields with 
+%               visualization options and save options:
+%               - numplotsperrow: number of UNISYS plots per row (so columns) 
+%               that should be visualized per figure.
+%               - numrows: number of rows that should be shown per figure.
+%               - steps: integer containing the width of bins in the
+%               colormap, e.g. 10ms.
+%               - map: type of colormap that should be used. String, e.g. 'hot' or 'cool'. If set to 'custom',
+%                        see map_act_spec.
+%               - map_spec: m-by-3 matrix containing color codes for which a custom color
+%                        map is made. E.g. [1 1 1; 0 0 0; 1 0 0] will produce a color map with a gradient
+%                        from white to black to red.
+%               - flipud: should the color map be flipped upside down? If yes, set to 1.
+%               - lims: k-by-2 matrix with k being the number of beats in the beats-struct.
+%               Each row contains the minimum and maximum value to display for each beat.
+%               - identical: only works if lims is not manually set. If set
+%               to 1, all beats will have the same color limits. 
+%               - symmetrical: only works if lims is not manually set. If
+%               set to 1, colormaps will be made symmetrical (so the start and 
+%               the end of the colormap will have the same color).
+%               - isolines: boolean for isolines between different colors
+%               on/off. Only works for hearts.
+%               - alpha: boolean for visible edges ('put a net over the
+%               heart'). Only works for heart, not for bullseye.   
+%               - save: struct inside dev_opts containing multiple save options:
+%                   - savefile: if set to 1, files should be saved. 
+%                   - fig: save matlab .fig? If yes, set to 1.
+%                   - png: save .png? If yes, set to 1.
+%                   - filename: set filename for figure/png to save.
+%                   If only a filename is specified but no full path,
+%                   results will be saved to current folder.
 % 
 % Outputs:
 % Vq_exp: Cell of length k (number of beats). Each of those cells contain 
 %       the 36000-by-1 array where the UNISYS-projected color values are stored.
 %       In this way, different subjects can be compared to each other.
-% hearts_exp: same format as Vq. However, this output will contain the
+% hearts same format as Vq. However, this output will contain the
 %       exported hearts from UNISYS. Especially useful when dev_opts.Vq was
 %       used as an input (see above), for reverse transformation. 
 % 
