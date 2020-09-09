@@ -1,6 +1,7 @@
 function [geom,Vq,hearts_exp]=UNISYS_Main(geom,beats,fieldnames_input,fieldnames_disp,reference,dev_opts)
 % UNISYS main script, which plots UNISYS visualization of data that are
-% entered. Job Stoks, Maastricht University, 2020.
+% entered. Job Stoks, Maastricht University, 2020. Contact:
+% j.stoks@maastrichtuniversity.nl
 % 
 % Inputs:
 % geom: struct containing heart geometry. Should contain at least 1 field: vertices (n*3 matrix).  
@@ -53,7 +54,7 @@ function [geom,Vq,hearts_exp]=UNISYS_Main(geom,beats,fieldnames_input,fieldnames
 %                   - savefile: if set to 1, files should be saved. 
 %                   - fig: save matlab .fig? If yes, set to 1.
 %                   - png: save .png? If yes, set to 1.
-%                   - filename: set filename for figure/png to save.
+%                   - savename: set filename for figure/png to save.
 %                   If only a filename is specified but no full path,
 %                   results will be saved to current folder.
 %                   
@@ -115,7 +116,9 @@ for i=1:size(geom.axis_points.original,1)
     [~, coord]=min(abs(diff));
     coord_interest.cartesian(i,:)=geom.vertices_transrot(coord,:);
     coord_interest.vert_ind=[coord_interest.vert_ind; coord];
+    if isfield(geom.axis_points,'names')
     coord_interest.names=geom.axis_points.names;
+    end
 end
 
 for beatnr=1:length(beats)
@@ -259,6 +262,13 @@ for beatnr=1:length(beats)
         % Project values from cone onto 2D x,y circular plot. Only x and y will be used for bullseye plot, but z can be used for cone visualization        
         z1_norm{beatnr,j}=abs(z1_norm{beatnr,j});
         [x{beatnr,j},y{beatnr,j},z{beatnr,j}] = pol2cart(theta{beatnr,j},dist_to_origin_norm{beatnr,j},dist_to_origin_norm{beatnr,j});       
+        
+        if size(basalnodes_todelete,1)>size(basalnodes_todelete,2)
+            basalnodes_todelete=basalnodes_todelete';
+        end
+        if size(othernodes_todelete{beatnr,j},1)>size(othernodes_todelete{beatnr,j},2)
+            othernodes_todelete{beatnr,j}=othernodes_todelete{beatnr,j}';
+        end
         
         nodes_todelete=[double(basalnodes_todelete)'; othernodes_todelete{beatnr,j}'];
         

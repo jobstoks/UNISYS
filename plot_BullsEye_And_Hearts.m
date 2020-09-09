@@ -1,6 +1,7 @@
 function [Vq_exp,hearts]=plot_BullsEye_And_Hearts(bullseye,hearts,numplotsperrow,dev_opts)
 % UNISYS plotting script. Job Stoks and Uyen C. Nguyen, Maastricht University, 2020.
-% This script is called from UNISYS_Main.m
+% Contact: j.stoks@maastrichtuniversity.nl
+% This script is called from UNISYS_Main.m.
 % 
 % Inputs:
 %    bullseye: struct with k indices (bullseye(1), bullseye(2), etc)
@@ -54,7 +55,7 @@ function [Vq_exp,hearts]=plot_BullsEye_And_Hearts(bullseye,hearts,numplotsperrow
 %                   - savefile: if set to 1, files should be saved. 
 %                   - fig: save matlab .fig? If yes, set to 1.
 %                   - png: save .png? If yes, set to 1.
-%                   - filename: set filename for figure/png to save.
+%                   - savename: set filename for figure/png to save.
 %                   If only a filename is specified but no full path,
 %                   results will be saved to current folder.
 % 
@@ -409,12 +410,16 @@ for numplot=1:maxlength
         if savefile
             if save_fig
                 savename_local=strcat(savename,'_',num2str(loop));
-                savename_local=savename_local{:};
+                if iscell(savename_local)
+                    savename_local=savename_local{:};
+                end
                 savefig(savename_local);
             end
             if savepng
                 savename_local=strcat(savename,'_',num2str(loop),'.png');
-                savename_local=savename_local{:};
+                if iscell(savename_local)
+                    savename_local=savename_local{:};
+                end
                 saveas(gcf,savename_local)
             end
         end
