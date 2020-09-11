@@ -306,15 +306,16 @@ else
      p2_r(3)=p2_r(3)-lowest_z; p2a_r(3)=p2a_r(3)-lowest_z; p2b_r(3)=p2b_r(3)-lowest_z; p3_r(3)=p3_r(3)-lowest_z; 
      apex=vert_t_r_xyz2(ind_low_z,:);
     
-    figure    
-    if isfield(geom,'faces')
-        trisurf(geom.faces,vert_t_r_xyz2(:,1),vert_t_r_xyz2(:,2),vert_t_r_xyz2(:,3))
-    else
-        scatter3(vert_t_r_xyz2(:,1),vert_t_r_xyz2(:,2),vert_t_r_xyz2(:,3),10,vert_t_r_xyz2(:,3),'filled'); axis equal; %just to visualize something
-        colormap('jet')
-    end
+    figure
     
-    hold on
+            if isfield(geom,'faces')
+            trisurf(geom.faces,vert_t_r_xyz2(1,:),vert_t_r_xyz2(2,:),vert_t_r_xyz2(3,:))
+        else
+            scatter3(vert_t_r_xyz2(1,:),vert_t_r_xyz2(2,:),vert_t_r_xyz2(3,:),10,vert_t_r_xyz2(3,:),'filled'); axis equal; %just to visualize something
+            colormap('jet')
+        end
+    
+    ,trisurf(geom.faces,vert_t_r_xyz2(:,1),vert_t_r_xyz2(:,2),vert_t_r_xyz2(:,3)), hold on
     xlabel('x'),ylabel('y'),zlabel('z');
     title('Translated and rotated geometry')
     plot3(0,0,-lowest_z,'or','MarkerFaceColor','k','MarkerSize',10), hold on

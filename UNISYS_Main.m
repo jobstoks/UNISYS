@@ -2,10 +2,12 @@ function [geom,Vq,hearts_exp]=UNISYS_Main(geom,beats,fieldnames_input,fieldnames
 % UNISYS main script, which plots UNISYS visualization of data that are
 % entered. Job Stoks, Maastricht University, 2020. Contact:
 % j.stoks@maastrichtuniversity.nl
-% 
+%
 % Inputs:
-% geom: struct containing heart geometry. Should contain at least 1 field: vertices (n*3 matrix).  
+% geom: struct containing heart geometry. Should contain at least 1 field: vertices (n*3 matrix).
 %       Other, optional fields of geom:
+%           - faces (m*3 matrix). Contains information on which nodes are
+%           connected to each other. Recommended for visualization, but not mandatory.
 %           - verticesBasalIndFakeSide: array of vertices at the basal side of
 %           the ventricles, which should be ignored.
 %           - vertices_transrot: if the original vertices were already
@@ -13,12 +15,12 @@ function [geom,Vq,hearts_exp]=UNISYS_Main(geom,beats,fieldnames_input,fieldnames
 % beats: struct with k indices (beats(1), beats(2), etc) and some fields
 %       (e.g. beats(1).actTime, beats(1).repTime). Some of these fields will
 %       be visualized by UNISYS.
-% fieldnames_input: cell-array of length L containing strings of the fieldnames in the 
+% fieldnames_input: cell-array of length L containing strings of the fieldnames in the
 %       beats-struct to be visualized by UNISYS, e.g. {'actTime','repTime'}
 % fieldnames_disp: cell-array of length L containing strings of the titles of the
 %       plots, corresponding to fieldnames_input (e.g. {'Activation time (ms)', 'Recovery time (ms)'}
 % reference: array of length k, or single value, containing a common reference
-%       for the results in the beats-struct that should be displayed by UNISYS. 
+%       for the results in the beats-struct that should be displayed by UNISYS.
 %       An example would be the first moment of depolarization, or body-surface Q.
 % dev_opts: Optional struct containing many possible visualization options. Fields:
 %       - Vq: Cell of length k (number of beats). If you have a pre-detmermined
@@ -26,9 +28,17 @@ function [geom,Vq,hearts_exp]=UNISYS_Main(geom,beats,fieldnames_input,fieldnames
 %       be entered here. This overrules the values in the beats-struct, and
 %       will lead to a reverse transformation from UNISYS to the
 %       corresponding heart (instead of the other way around).
-%       - clrmap: Struct containing the following optional fields with 
+%       - plot: set to 0 if you don't want to plot any data, but only get
+%       the output (like Vq)
+%       - filefolder_basalnodes (string): if basal nodes were previously defined already, 
+%       this optional field should contain the path to the basalnodes-file (.csv).
+%       Don't forget to also include filename_basalnodes.
+%       - filename_basalnodes (string): if basal nodes were previously defined already, 
+%       this optional field should contain the filename of the
+%       basalnodes-file (.csv).
+%       - clrmap: Struct containing the following optional fields with
 %               visualization options and save options:
-%               - numplotsperrow: number of UNISYS plots per row (so columns) 
+%               - numplotsperrow: number of UNISYS plots per row (so columns)
 %               that should be visualized per figure.
 %               - numrows: number of rows that should be shown per figure.
 %               - steps: integer containing the width of bins in the
@@ -42,28 +52,28 @@ function [geom,Vq,hearts_exp]=UNISYS_Main(geom,beats,fieldnames_input,fieldnames
 %               - lims: k-by-2 matrix with k being the number of beats in the beats-struct.
 %               Each row contains the minimum and maximum value to display for each beat.
 %               - identical: only works if lims is not manually set. If set
-%               to 1, all beats will have the same color limits. 
+%               to 1, all beats will have the same color limits.
 %               - symmetrical: only works if lims is not manually set. If
-%               set to 1, colormaps will be made symmetrical (so the start and 
+%               set to 1, colormaps will be made symmetrical (so the start and
 %               the end of the colormap will have the same color).
 %               - isolines: boolean for isolines between different colors
 %               on/off. Only works for hearts.
 %               - alpha: boolean for visible edges ('put a net over the
-%               heart'). Only works for heart, not for bullseye.   
+%               heart'). Only works for heart, not for bullseye.
 %               - save: struct inside dev_opts containing multiple save options:
-%                   - savefile: if set to 1, files should be saved. 
+%                   - savefile: if set to 1, files should be saved.
 %                   - fig: save matlab .fig? If yes, set to 1.
 %                   - png: save .png? If yes, set to 1.
 %                   - savename: set filename for figure/png to save.
 %                   If only a filename is specified but no full path,
 %                   results will be saved to current folder.
-%                   
-% 
-% 
+%
+%
+%
 % Optional outputs:
 % geom: struct containing all new fields, such as
 %       verticesBasalIndFakeSide and vertices_transrot. Contains all information
-%       about translation and rotation of original vertices, left vs. right 
+%       about translation and rotation of original vertices, left vs. right
 %       and the basal nodes.
 % Vq: Cell of length L (which is the number of fieldnames). Each of the cells
 %       within (i.e. cell{1}, cell{2}, etc.) contains a new cell of length k
@@ -72,7 +82,7 @@ function [geom,Vq,hearts_exp]=UNISYS_Main(geom,beats,fieldnames_input,fieldnames
 %       different subjects can be compared to each other.
 % hearts_exp: same format as Vq. However, this output will contain the
 %       exported hearts from UNISYS. Especially useful when dev_opts.Vq was
-%       used as an input (see above), for reverse transformation. 
+%       used as an input (see above), for reverse transformation.
 
 
 % If reference is a single value, turn it into an array
@@ -86,9 +96,9 @@ if ~exist('dev_opts','var') || ~isfield(dev_opts,'numplotsperrow')
 end
 
 % %Remove values positioned at basal nodes
-if ~isfield(geom,'verticesBasalIndFakeSide')
+if ~isfield(geom,'verticesBasalIndFakeSide') || ~isfield(geom,'verticesBasalIndToKeepSide') 
     if exist('dev_opts','var') && isfield(dev_opts,'filefolder_basalnodes') && isfield(dev_opts,'filename_basalnodes')
-        geom=Define_BasalNodes_Manual(dev_opts.filename_basalnodes,dev_opts.filefolder_basalnodes,geom,1);
+        geom=Bullseye_define_base(dev_opts.filename_basalnodes,dev_opts.filefolder_basalnodes,geom,1);
     else
         geom=Bullseye_define_base(geom);
     end
@@ -117,7 +127,7 @@ for i=1:size(geom.axis_points.original,1)
     coord_interest.cartesian(i,:)=geom.vertices_transrot(coord,:);
     coord_interest.vert_ind=[coord_interest.vert_ind; coord];
     if isfield(geom.axis_points,'names')
-    coord_interest.names=geom.axis_points.names;
+        coord_interest.names=geom.axis_points.names;
     end
 end
 
@@ -259,9 +269,9 @@ for beatnr=1:length(beats)
             warning('Something went wrong in converting coordinates from dist_to_origin_norm...')
         end
         
-        % Project values from cone onto 2D x,y circular plot. Only x and y will be used for bullseye plot, but z can be used for cone visualization        
+        % Project values from cone onto 2D x,y circular plot. Only x and y will be used for bullseye plot, but z can be used for cone visualization
         z1_norm{beatnr,j}=abs(z1_norm{beatnr,j});
-        [x{beatnr,j},y{beatnr,j},z{beatnr,j}] = pol2cart(theta{beatnr,j},dist_to_origin_norm{beatnr,j},dist_to_origin_norm{beatnr,j});       
+        [x{beatnr,j},y{beatnr,j},z{beatnr,j}] = pol2cart(theta{beatnr,j},dist_to_origin_norm{beatnr,j},dist_to_origin_norm{beatnr,j});
         
         if size(basalnodes_todelete,1)>size(basalnodes_todelete,2)
             basalnodes_todelete=basalnodes_todelete';
@@ -316,13 +326,17 @@ for j=1:size(vals,2)
     end
     
     %Plot
-
-%     dev_opts.Vq=plot_BullsEye_And_Hearts(bullseye,hearts,dev_opts.numplotsperrow,dev_opts);
-%         bullseye(beatnr).coord_of_interest=coord_interest;
-%         dev_opts.Vq=segment_labels_bullseye;
+    
+    %     dev_opts.Vq=plot_BullsEye_And_Hearts(bullseye,hearts,dev_opts.numplotsperrow,dev_opts);
+    %         bullseye(beatnr).coord_of_interest=coord_interest;
+    %         dev_opts.Vq=segment_labels_bullseye;
     [Vq{j},hearts_exp{j}]=plot_BullsEye_And_Hearts(bullseye,hearts,dev_opts.numplotsperrow,dev_opts);
 end
-
+if exist('dev_opts','var') 
+    if ~isfield(dev_opts,'plot') || dev_opts.plot==0
+        close all
+    end
+end
 end
 
 

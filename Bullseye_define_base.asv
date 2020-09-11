@@ -8,7 +8,7 @@ if isfield(geom,'faces')
 trisurf(geom.faces,geom.vertices(:,1),geom.vertices(:,2),geom.vertices(:,3));
 else
    scatter3(geom.vertices(:,1),geom.vertices(:,2),geom.vertices(:,3),10,geom.vertices(:,3),'filled')
-   colormap('jet')
+   colormap('parula')
 end
 axis equal;
 hold on;
