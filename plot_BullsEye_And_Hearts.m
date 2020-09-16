@@ -73,7 +73,11 @@ function [Vq_exp,hearts]=plot_BullsEye_And_Hearts(bullseye,hearts,numplotsperrow
 
 
 default_symmetrical=0;
-default_steps=1;
+alvals=[];
+for i=1:length(bullseye)
+    alvals=[alvals; bullseye(i).vals];
+end
+default_steps=(max(alvals)-min(alvals))/25;
 default_map='durrermap';
 default_isolines=0;
 default_alpha=0;
@@ -348,14 +352,12 @@ for numplot=1:maxlength
                 plot(real([0 R]*exp(j*offset_angle(n))),imag([0 R]*exp(j*offset_angle(n))),'k-');
             end
             
-            if isfield(bullseye(end),'coord_of_interest') && isfield(bullseye(end).coord_of_interest,'cart_norm') && ~isempty(bullseye(end).coord_of_interest.cart_norm)
+            if isfield(bullseye(end),'coord_of_interest') && isfield(bullseye(end).coord_of_interest,'cart_norm') && ~isempty(bullseye(end).coord_of_interest.cart_norm) 
                 plot([bullseye(end).coord_of_interest.cart_norm(1,1) bullseye(end).coord_of_interest.cart_norm(3,1)],[bullseye(end).coord_of_interest.cart_norm(1,2) bullseye(end).coord_of_interest.cart_norm(3,2)],'k--','LineWidth',3)
                 plot([bullseye(end).coord_of_interest.cart_norm(1,1) bullseye(end).coord_of_interest.cart_norm(4,1)],[bullseye(end).coord_of_interest.cart_norm(1,2) bullseye(end).coord_of_interest.cart_norm(4,2)],'k--','LineWidth',3)
                 %             scatter(bullseye(end).coord_of_interest.cart_norm(6,1),bullseye(end).coord_of_interest.cart_norm(6,2),50,'filled','k')
                 
-                dist_to_side=1-(bullseye(end).coord_of_interest.cart_norm(6,1).^2+bullseye(end).coord_of_interest.cart_norm(6,2).^2);
-                
-                
+                dist_to_side=1-(bullseye(end).coord_of_interest.cart_norm(6,1).^2+bullseye(end).coord_of_interest.cart_norm(6,2).^2);                               
             end
             
             if numplot<=length(hearts)

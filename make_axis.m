@@ -155,21 +155,26 @@ else
 %     p3_t=p3-mean(geom.vertices);
     
     dist_p2=nan(numsteps,size(geom.vertices,1));
-    dist_p3=nan(numsteps,size(geom.vertices,1));
-    p2_s=nan(numsteps,3);
-    p3_s=nan(numsteps,3);
     
+    
+   
+    if ~isfield(geom,'contains_base') || geom.contains_base==1
+        p2_s=nan(numsteps,3);
+        for i=1:numsteps
+            p2_s(i,:)=(p2-pmid)*(5*(i/numsteps));
+            dist_p2(i,:)=sqrt((geom.vertices(:,1)-(pmid(1)+p2_s(i,1))).^2+(geom.vertices(:,2)-(pmid(2)+p2_s(i,2))).^2+(geom.vertices(:,3)-(pmid(3)+p2_s(i,3))).^2);
+        end
+        [~,col_p2]=find(dist_p2==min(min(dist_p2)));
+        p2=geom.vertices(col_p2,:);
+    end
+    
+    dist_p3=nan(numsteps,size(geom.vertices,1));
+    p3_s=nan(numsteps,3);
     for i=1:numsteps
-        p2_s(i,:)=(p2-pmid)*(5*(i/numsteps));
         p3_s(i,:)=(p3-pmid)*(5*(i/numsteps));
-        
-        dist_p2(i,:)=sqrt((geom.vertices(:,1)-(pmid(1)+p2_s(i,1))).^2+(geom.vertices(:,2)-(pmid(2)+p2_s(i,2))).^2+(geom.vertices(:,3)-(pmid(3)+p2_s(i,3))).^2);
         dist_p3(i,:)=sqrt((geom.vertices(:,1)-(pmid(1)+p3_s(i,1))).^2+(geom.vertices(:,2)-(pmid(2)+p3_s(i,2))).^2+(geom.vertices(:,3)-(pmid(3)+p3_s(i,3))).^2);
     end
-    [~,col_p2]=find(dist_p2==min(min(dist_p2)));
     [~,col_p3]=find(dist_p3==min(min(dist_p3)));
-    
-    p2=geom.vertices(col_p2,:);
     p3=geom.vertices(col_p3,:);
 
     %% Finally: Rotation! Make the axis completely vertical (along the z-axis), through the origin.
@@ -277,7 +282,7 @@ else
     
     if mean(vert_t_r_xyz2(3,:))<0
         fz_y(2)=p2_r(3)/p2_r(2); fz_y(1)=0;
-        angle_yzplane=.5*pi-atan(fz_y(2));
+        angle_yzplane=1.5*pi-atan(fz_y(2));
         rm_x=[1 0 0;0 cos(angle_yzplane) -sin(angle_yzplane); 0 sin(angle_yzplane) cos(angle_yzplane)];
         vert_t_r_xyz2=rm_x*vert_t_r_xyz2;
         p1_r=rm_x*p1_r; p2_r=rm_x*p2_r; p2a_r=rm_x*p2a_r; p2b_r=rm_x*p2b_r; p3_r=rm_x*p3_r;

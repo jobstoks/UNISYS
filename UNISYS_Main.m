@@ -12,6 +12,8 @@ function [geom,Vq,hearts_exp]=UNISYS_Main(geom,beats,fieldnames_input,fieldnames
 %           the ventricles, which should be ignored.
 %           - vertices_transrot: if the original vertices were already
 %           rotated to an upright position, you don't need to do this again
+%           - contains_base: enter 0 if the geometry does not contain any
+%           basal nodes. If it does contain basal nodes, 
 % beats: struct with k indices (beats(1), beats(2), etc) and some fields
 %       (e.g. beats(1).actTime, beats(1).repTime). Some of these fields will
 %       be visualized by UNISYS.
@@ -92,24 +94,35 @@ end
 
 % default numplotsperrow=3
 if ~exist('dev_opts','var') || ~isfield(dev_opts,'numplotsperrow')
-    dev_opts.numplotsperrow=3;
+    dev_opts.numplotsperrow=1;
 end
 
 % %Remove values positioned at basal nodes
-if ~isfield(geom,'verticesBasalIndFakeSide') || ~isfield(geom,'verticesBasalIndToKeepSide') 
-    if exist('dev_opts','var') && isfield(dev_opts,'filefolder_basalnodes') && isfield(dev_opts,'filename_basalnodes')
-        geom=Bullseye_define_base(dev_opts.filename_basalnodes,dev_opts.filefolder_basalnodes,geom,1);
-    else
-        geom=Bullseye_define_base(geom);
+if isfield(geom,'contains_base')
+contains_base=geom.contains_base;
+else
+contains_base=1;
+end
+
+if contains_base
+    if ~isfield(geom,'verticesBasalIndFakeSide') || ~isfield(geom,'verticesBasalIndToKeepSide')
+        if exist('dev_opts','var') && isfield(dev_opts,'filefolder_basalnodes') && isfield(dev_opts,'filename_basalnodes')
+            geom=Bullseye_define_base(dev_opts.filename_basalnodes,dev_opts.filefolder_basalnodes,geom,1);
+        else
+            geom=Bullseye_define_base(geom);
+        end
+        if iscell(fieldnames_input)
+            fieldname_local=fieldnames_input{:};
+        else
+            fieldname_local=fieldnames_input;
+        end
+        for lp_beat=1:length(beats)
+            beats(lp_beat).(fieldname_local)(geom.verticesBasalIndFakeSide)=nan;
+        end
     end
-    if iscell(fieldnames_input)
-        fieldname_local=fieldnames_input{:};
-    else
-        fieldname_local=fieldnames_input;
-    end
-    for lp_beat=1:length(beats)
-        beats(lp_beat).(fieldname_local)(geom.verticesBasalIndFakeSide)=nan;
-    end
+elseif contains_base==0
+    geom.verticesBasalIndFakeSide=[];
+    geom.verticesBasalIndToKeepSide=1:size(geom.vertices,1);
 end
 
 % Transform geometry to be perfectly upright, with apex on top
@@ -333,7 +346,7 @@ for j=1:size(vals,2)
     [Vq{j},hearts_exp{j}]=plot_BullsEye_And_Hearts(bullseye,hearts,dev_opts.numplotsperrow,dev_opts);
 end
 if exist('dev_opts','var') 
-    if ~isfield(dev_opts,'plot') || dev_opts.plot==0
+    if isfield(dev_opts,'plot') && dev_opts.plot==0
         close all
     end
 end
