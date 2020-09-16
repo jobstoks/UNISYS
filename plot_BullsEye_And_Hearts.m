@@ -379,7 +379,7 @@ for numplot=1:maxlength
         if doPlot
             subtightplot(numrows,numplotsperrow,id_plot);
         end
-        if isfield(hearts.geom,'faces')
+        if isfield(hearts(numplot).geom,'faces')
             faces_val=nan(size(hearts(numplot).geom.faces,1),1);
             for i=1:length(faces_val)
                 faces_val(i)=mode([hearts(numplot).vals(hearts(numplot).geom.faces(i,1)) hearts(numplot).vals(hearts(numplot).geom.faces(i,2)) hearts(numplot).vals(hearts(numplot).geom.faces(i,3))]);
@@ -387,7 +387,7 @@ for numplot=1:maxlength
             hearts(numplot).faces_vals=faces_val;
         end
         if doPlot
-            if isfield(hearts.geom,'faces')
+            if isfield(hearts(numplot).geom,'faces')
                 trisurf(hearts(numplot).geom.faces,hearts(numplot).geom.vertices(:,1),hearts(numplot).geom.vertices(:,2),hearts(numplot).geom.vertices(:,3),hearts(numplot).faces_vals,'EdgeAlpha',alpha,'EdgeColor',[.4 .4 .4],'FaceColor','flat');
             else
                 scatter3(hearts(numplot).geom.vertices(:,1),hearts(numplot).geom.vertices(:,2),hearts(numplot).geom.vertices(:,3),10,hearts(numplot).vals,'filled')
@@ -414,7 +414,7 @@ for numplot=1:maxlength
                 %                 [hearts(end).geom.vertices(bullseye(end).coord_of_interest.vert_ind(1),3) hearts(end).geom.vertices(bullseye(end).coord_of_interest.vert_ind(3),3) hearts(end).geom.vertices(bullseye(end).coord_of_interest.vert_ind(4),3) hearts(end).geom.vertices(bullseye(end).coord_of_interest.vert_ind(1),3)],'LineWidth',3,'Color','k')
             end
             
-            if isolines==1 && isfield(hearts.geom,'faces')
+            if isolines==1 && isfield(hearts(numplot).geom,'faces')
                 clear isocell
                 isocell{1}=hearts(numplot).geom.faces;
                 isocell{2}=hearts(numplot).geom.vertices;
