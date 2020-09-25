@@ -184,7 +184,7 @@ else
     p1_r=[0 0 0];
     
     % Determine angle of heart-axis with z axis (so xy-plane) and rotate
-    angle_xyplane=.5*pi-atan(fy_x(2));
+    angle_xyplane=1.5*pi-atan(fy_x(2));
     rm_z=[cos(angle_xyplane) -sin(angle_xyplane) 0; sin(angle_xyplane) cos(angle_xyplane) 0; 0 0 1];
     vert_t_r_z=rm_z*(vert_t'); p1_r=rm_z*p1_r'; p2_r=rm_z*(p2'-p1'); p2a_r=rm_z*(p2a'-p1'); p2b_r=rm_z*(p2b'-p1'); p3_r=rm_z*(p3'-p1');
     
@@ -302,7 +302,29 @@ else
         hold on,scatter3(p2_r(1),p2_r(2),p2_r(3),50,'filled','b')
         hold on,scatter3(p3_r(1),p3_r(2),p3_r(3),50,'filled','g')
     end
-    
+        
+    if mean(vert_t_r_xyz2(3,:))<0
+        fz_y(2)=p2_r(3)/p2_r(2); fz_y(1)=0;
+        angle_yzplane=0.5*pi-atan(fz_y(2));
+        rm_x=[1 0 0;0 cos(angle_yzplane) -sin(angle_yzplane); 0 sin(angle_yzplane) cos(angle_yzplane)];
+        vert_t_r_xyz2=rm_x*vert_t_r_xyz2;
+        p1_r=rm_x*p1_r; p2_r=rm_x*p2_r; p2a_r=rm_x*p2a_r; p2b_r=rm_x*p2b_r; p3_r=rm_x*p3_r;
+        
+        subplot(1,2,2)
+        
+        if isfield(geom,'faces')
+            trisurf(geom.faces,vert_t_r_xyz2(1,:),vert_t_r_xyz2(2,:),vert_t_r_xyz2(3,:))
+        else
+            scatter3(vert_t_r_xyz2(1,:),vert_t_r_xyz2(2,:),vert_t_r_xyz2(3,:),10,vert_t_r_xyz2(3,:),'filled'); axis equal; %just to visualize something
+            colormap('jet')
+        end
+        
+        axis equal
+        xlabel('x'),ylabel('y'), zlabel('z')
+        hold on,scatter3(p1_r(1),p1_r(2),p1_r(3),50,'filled','r')
+        hold on,scatter3(p2_r(1),p2_r(2),p2_r(3),50,'filled','b')
+        hold on,scatter3(p3_r(1),p3_r(2),p3_r(3),50,'filled','g')
+    end
     
     vert_t_r_xyz2=vert_t_r_xyz2';
     

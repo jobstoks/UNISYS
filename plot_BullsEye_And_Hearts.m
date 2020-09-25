@@ -111,24 +111,41 @@ if exist('dev_opts','var') && isfield(dev_opts,'Vq')
         bullseye(beatnr).vals=Vq_all{beatnr}(ind);
         hearts(beatnr).vals(hearts(beatnr).geom.verticesBasalIndToKeepSide)=Vq_all{beatnr}(ind);
     end
+    
+    alvals=[];
+    for i=1:size(Vq_all{1},2)
+        alvals=[alvals; Vq_all{1}(:,i)];
+    end
+    default_steps=(max(alvals)-min(alvals))/25;
+    
 end
 
-allvals_separated=cell(max([length(hearts) length(bullseye)]),1);
+
 allvals=[];
-for i=1:length(bullseye)
-    if size(bullseye(i).vals,2)>size(bullseye(i).vals,1)
-        bullseye(i).vals=bullseye(i).vals';
+if exist('Vq_all','var')
+    if size(Vq_all{1},2)>size(Vq_all{1},1)
+        Vq_all{1}=Vq_all{1}';
     end
-    allvals=[allvals; bullseye(i).vals];
-    allvals_separated{i}=bullseye(i).vals;
-end
-for i=1:length(hearts)
-    if size(hearts(i).vals,2)>size(hearts(i).vals,1)
-        hearts(i).vals=hearts(i).vals';
+    for i=1:size(Vq_all{1},2)
+        allvals=[allvals; Vq_all{1}(:,i)];
+        allvals_separated{i}=Vq_all{1}(:,i);
     end
-    allvals=[allvals; hearts(i).vals];
-    allvals_separated{i}=[allvals_separated{i};hearts(i).vals];
+else
+    for i=1:length(bullseye)
+        if size(bullseye(i).vals,2)>size(bullseye(i).vals,1)
+            bullseye(i).vals=bullseye(i).vals';
+        end
+        allvals=[allvals; bullseye(i).vals];
+        allvals_separated{i}=bullseye(i).vals;
+    end
 end
+% for i=1:length(hearts)
+%     if size(hearts(i).vals,2)>size(hearts(i).vals,1)
+%         hearts(i).vals=hearts(i).vals';
+%     end
+%     allvals=[allvals; hearts(i).vals];
+%     allvals_separated{i}=[allvals_separated{i};hearts(i).vals];
+% end
 default_lims_unidentical_nonsymmetrical=nan(max([length(hearts) length(bullseye)]),2);
 default_lims_unidentical_symmetrical=default_lims_unidentical_nonsymmetrical;
 for i=1:length(allvals_separated)
@@ -289,7 +306,7 @@ maxlength=max([length(bullseye) length(hearts)]);
 numplotsperrow=numplotsperrow*2;
 
 if doPlot
-figure
+    figure
 end
 
 set(gcf,'color','w');
@@ -352,12 +369,12 @@ for numplot=1:maxlength
                 plot(real([0 R]*exp(j*offset_angle(n))),imag([0 R]*exp(j*offset_angle(n))),'k-');
             end
             
-            if isfield(bullseye(end),'coord_of_interest') && isfield(bullseye(end).coord_of_interest,'cart_norm') && ~isempty(bullseye(end).coord_of_interest.cart_norm) 
+            if isfield(bullseye(end),'coord_of_interest') && isfield(bullseye(end).coord_of_interest,'cart_norm') && ~isempty(bullseye(end).coord_of_interest.cart_norm)
                 plot([bullseye(end).coord_of_interest.cart_norm(1,1) bullseye(end).coord_of_interest.cart_norm(3,1)],[bullseye(end).coord_of_interest.cart_norm(1,2) bullseye(end).coord_of_interest.cart_norm(3,2)],'k--','LineWidth',3)
                 plot([bullseye(end).coord_of_interest.cart_norm(1,1) bullseye(end).coord_of_interest.cart_norm(4,1)],[bullseye(end).coord_of_interest.cart_norm(1,2) bullseye(end).coord_of_interest.cart_norm(4,2)],'k--','LineWidth',3)
                 %             scatter(bullseye(end).coord_of_interest.cart_norm(6,1),bullseye(end).coord_of_interest.cart_norm(6,2),50,'filled','k')
                 
-                dist_to_side=1-(bullseye(end).coord_of_interest.cart_norm(6,1).^2+bullseye(end).coord_of_interest.cart_norm(6,2).^2);                               
+                dist_to_side=1-(bullseye(end).coord_of_interest.cart_norm(6,1).^2+bullseye(end).coord_of_interest.cart_norm(6,2).^2);
             end
             
             if numplot<=length(hearts)

@@ -111,24 +111,40 @@ if exist('dev_opts','var') && isfield(dev_opts,'Vq')
         bullseye(beatnr).vals=Vq_all{beatnr}(ind);
         hearts(beatnr).vals(hearts(beatnr).geom.verticesBasalIndToKeepSide)=Vq_all{beatnr}(ind);
     end
+    
+    for i=1:size(Vq_all{1},2)
+        alvals=[alvals; Vq_all{1}(:,i)];
+    end
+    default_steps=(max(alvals)-min(alvals))/25;
+    
 end
 
-allvals_separated=cell(max([length(hearts) length(bullseye)]),1);
+
 allvals=[];
-for i=1:length(bullseye)
-    if size(bullseye(i).vals,2)>size(bullseye(i).vals,1)
-        bullseye(i).vals=bullseye(i).vals';
+if exist('Vq_all','var')
+    if size(Vq_all{1},2)>size(Vq_all{1},1)
+        Vq_all{1}=Vq_all{1}';
     end
-    allvals=[allvals; bullseye(i).vals];
-    allvals_separated{i}=bullseye(i).vals;
-end
-for i=1:length(hearts)
-    if size(hearts(i).vals,2)>size(hearts(i).vals,1)
-        hearts(i).vals=hearts(i).vals';
+    for i=1:size(Vq_all{1},2)
+        allvals=[allvals; Vq_all{1}(:,i)];
+        allvals_separated{i}=Vq_all{1}(:,i);
     end
-    allvals=[allvals; hearts(i).vals];
-    allvals_separated{i}=[allvals_separated{i};hearts(i).vals];
+else
+    for i=1:length(bullseye)
+        if size(bullseye(i).vals,2)>size(bullseye(i).vals,1)
+            bullseye(i).vals=bullseye(i).vals';
+        end
+        allvals=[allvals; bullseye(i).vals];
+        allvals_separated{i}=bullseye(i).vals;
+    end
 end
+% for i=1:length(hearts)
+%     if size(hearts(i).vals,2)>size(hearts(i).vals,1)
+%         hearts(i).vals=hearts(i).vals';
+%     end
+%     allvals=[allvals; hearts(i).vals];
+%     allvals_separated{i}=[allvals_separated{i};hearts(i).vals];
+% end
 default_lims_unidentical_nonsymmetrical=nan(max([length(hearts) length(bullseye)]),2);
 default_lims_unidentical_symmetrical=default_lims_unidentical_nonsymmetrical;
 for i=1:length(allvals_separated)
@@ -379,7 +395,7 @@ for numplot=1:maxlength
         if doPlot
             subtightplot(numrows,numplotsperrow,id_plot);
         end
-        if isfield(hearts,'faces')
+        if isfield(hearts(numplot).geom,'faces')
             faces_val=nan(size(hearts(numplot).geom.faces,1),1);
             for i=1:length(faces_val)
                 faces_val(i)=mode([hearts(numplot).vals(hearts(numplot).geom.faces(i,1)) hearts(numplot).vals(hearts(numplot).geom.faces(i,2)) hearts(numplot).vals(hearts(numplot).geom.faces(i,3))]);
@@ -387,7 +403,7 @@ for numplot=1:maxlength
             hearts(numplot).faces_vals=faces_val;
         end
         if doPlot
-            if isfield(hearts,'faces')
+            if isfield(hearts(numplot).geom,'faces')
                 trisurf(hearts(numplot).geom.faces,hearts(numplot).geom.vertices(:,1),hearts(numplot).geom.vertices(:,2),hearts(numplot).geom.vertices(:,3),hearts(numplot).faces_vals,'EdgeAlpha',alpha,'EdgeColor',[.4 .4 .4],'FaceColor','flat');
             else
                 scatter3(hearts(numplot).geom.vertices(:,1),hearts(numplot).geom.vertices(:,2),hearts(numplot).geom.vertices(:,3),10,hearts(numplot).vals,'filled')
@@ -414,7 +430,7 @@ for numplot=1:maxlength
                 %                 [hearts(end).geom.vertices(bullseye(end).coord_of_interest.vert_ind(1),3) hearts(end).geom.vertices(bullseye(end).coord_of_interest.vert_ind(3),3) hearts(end).geom.vertices(bullseye(end).coord_of_interest.vert_ind(4),3) hearts(end).geom.vertices(bullseye(end).coord_of_interest.vert_ind(1),3)],'LineWidth',3,'Color','k')
             end
             
-            if isolines==1 && isfield(hearts,'faces')
+            if isolines==1 && isfield(hearts(numplot).geom,'faces')
                 clear isocell
                 isocell{1}=hearts(numplot).geom.faces;
                 isocell{2}=hearts(numplot).geom.vertices;

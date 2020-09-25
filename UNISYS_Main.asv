@@ -94,7 +94,7 @@ end
 
 % default numplotsperrow=3
 if ~exist('dev_opts','var') || ~isfield(dev_opts,'numplotsperrow')
-    dev_opts.numplotsperrow=3;
+    dev_opts.numplotsperrow=1;
 end
 
 % %Remove values positioned at basal nodes
@@ -107,9 +107,9 @@ end
 if contains_base
     if ~isfield(geom,'verticesBasalIndFakeSide') || ~isfield(geom,'verticesBasalIndToKeepSide')
         if exist('dev_opts','var') && isfield(dev_opts,'filefolder_basalnodes') && isfield(dev_opts,'filename_basalnodes')
-            geom=Bullseye_define_base(dev_opts.filename_basalnodes,dev_opts.filefolder_basalnodes,geom,1);
+            Define_BasalNodes_Manual(dev_opts.filefolder_basalnodes,dev_opts.filename_basalnodes,geom,1)
         else
-            geom=Bullseye_define_base(geom);
+        geom=Bullseye_define_base(geom);
         end
         if iscell(fieldnames_input)
             fieldname_local=fieldnames_input{:};
@@ -171,7 +171,7 @@ for beatnr=1:length(beats)
     for j=1:size(vals_heart,2)
         % Bullseye cannot take NaNs, so these values are deleted
         % Delete values which are NaNs
-        vals{beatnr,j}=vals_heart{beatnr,j};
+       vals{beatnr,j}=vals_heart{beatnr,j};
         vals{beatnr,j}(basalnodes_todelete)=[];
         othernodes_todelete{beatnr,j}=find(isnan(vals{beatnr,j})==1);
         vals{beatnr,j}(othernodes_todelete{beatnr,j})=[];
@@ -351,5 +351,61 @@ if exist('dev_opts','var')
     end
 end
 end
+
+function clrbar_vals= set_clrs(numplot,lims,flipud_var,steps,map,map_spec,symmetrical)
+%Define colormap and how to display it exactly
+maxval_disp=ceil(max(lims(numplot,:))/steps)*steps;
+minval_disp=floor(min(lims(numplot,:))/steps)*steps;
+range=maxval_disp-minval_disp;
+arraylength_req= round(range/steps)+1;
+stepsize_req= range/(arraylength_req-1);
+if ~strcmp(map,'custom')
+    if ~symmetrical
+        clrmap=eval(strcat(map,'(arraylength_req)'));
+    elseif symmetrical
+        clrmap=eval(strcat('[',map,'(arraylength_req);flipud(',map,'(arraylength_req))]'));
+    end
+else
+    
+    clrarray=map_spec;
+    stepsize_old=range/(size(clrarray,1)-1);
+    
+    if stepsize_req~=stepsize_old
+        for lp_clr=1:3
+            clrmap(:,lp_clr)=interp1q((minval_disp:stepsize_old:maxval_disp)',clrarray(:,lp_clr),(minval_disp:stepsize_req:maxval_disp)');
+        end
+    else
+        clrmap=clrarray;
+    end
+end
+if flipud_var==1
+    clrmap=flipud(clrmap);
+end
+if symmetrical
+    clrmap=[clrmap;flipud(clrmap)];
+end
+
+set(gca,'CLim',[minval_disp maxval_disp]);
+colormap(gca,clrmap);
+clrbar{numplot}=colorbar('eastoutside');
+caxis([minval_disp maxval_disp])
+
+set(clrbar{numplot},'YLim',[minval_disp maxval_disp]);
+clrbar_vals= minval_disp:steps:maxval_disp;
+if length(clrbar_vals)>5
+    if range<6
+        stepsize_here=range/5;
+        clrbar_vals_disp=round(minval_disp:stepsize_here:maxval_disp,3);
+    else
+        stepsize_here=range/5;
+        clrbar_vals_disp=round(minval_disp:stepsize_here:maxval_disp);
+    end
+else
+    clrbar_vals_disp=clrbar_vals;
+end
+
+set(clrbar{numplot},'YTick',clrbar_vals_disp);
+end
+
 
 
