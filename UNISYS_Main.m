@@ -38,6 +38,19 @@ function [geom,Vq,hearts_exp]=UNISYS_Main(geom,beats,fieldnames_input,fieldnames
 %       - filename_basalnodes (string): if basal nodes were previously defined already, 
 %       this optional field should contain the filename of the
 %       basalnodes-file (.csv).
+%       - plot: Struct containing the following optional field with visualization options:
+%               - hearts (boolean): set to 0 if hearts should not be
+%               plotted. Default: 1. 
+%               - bullseyes (boolean): set to 0 if hearts should not be
+%               plotted. Default: 1. 
+%               - colorbar_hearts: Set to 0 if colorbars should not be shown. 
+%               Set to 1 if every heart should contain a colorbar. 
+%               Set to 2 if only the last heart of a figure (so the last heart-subplot)
+%               should contain a colorbar. default: 1. 
+%               - colorbar_bullseyes: Set to 0 if colorbars should not be shown. 
+%               Set to 1 if every bullseye should contain a colorbar. 
+%               Set to 2 if only the last bullseye of a figure (so the last bullseye-subplot)
+%               should contain a colorbar. default: 1. 
 %       - clrmap: Struct containing the following optional fields with
 %               visualization options and save options:
 %               - numplotsperrow: number of UNISYS plots per row (so columns)
@@ -324,11 +337,21 @@ for j=1:size(vals,2)
         
         % Titles
         if iscell(fieldnames_disp)
-            bullseye(beatnr).title=[fieldnames_disp{j} ' Beat ' num2str(beatnr) ' Bullseye'];
-            hearts(beatnr).title=[fieldnames_disp{j} ' Beat ' num2str(beatnr) ' Heart'];
+            if exist('dev_opts','var') && isfield(dev_opts,'title')
+                bullseye(beatnr).title=[fieldnames_disp{j} ' ' dev_opts.title];
+                hearts(beatnr).title=[fieldnames_disp{j} ' ' dev_opts.title];
+            else
+                bullseye(beatnr).title=[fieldnames_disp{j} ' Beat ' num2str(beatnr) ' Bullseye'];
+                hearts(beatnr).title=[fieldnames_disp{j} ' Beat ' num2str(beatnr) ' Heart'];
+            end
         else
-            bullseye(beatnr).title=[fieldnames_disp ' Beat ' num2str(beatnr) ' Bullseye'];
-            hearts(beatnr).title=[fieldnames_disp ' Beat ' num2str(beatnr) ' Heart'];
+            if exist('dev_opts','var') && isfield(dev_opts,'title')
+                bullseye(beatnr).title=[fieldnames_disp ' ' dev_opts.title];
+                hearts(beatnr).title=[fieldnames_disp ' ' dev_opts.title];
+            else
+                bullseye(beatnr).title=[fieldnames_disp ' Beat ' num2str(beatnr) ' Bullseye'];
+                hearts(beatnr).title=[fieldnames_disp ' Beat ' num2str(beatnr) ' Heart'];
+            end
         end
         
         hearts(beatnr).vals=vals_heart{beatnr,j};
@@ -343,10 +366,34 @@ for j=1:size(vals,2)
     %     dev_opts.Vq=plot_BullsEye_And_Hearts(bullseye,hearts,dev_opts.numplotsperrow,dev_opts);
     %         bullseye(beatnr).coord_of_interest=coord_interest;
     %         dev_opts.Vq=segment_labels_bullseye;
-    [Vq{j},hearts_exp{j}]=plot_BullsEye_And_Hearts(bullseye,hearts,dev_opts.numplotsperrow,dev_opts);
+
+    
+    default_showbullseyes=1;
+    default_showhearts=1;
+    if isfield(dev_opts,'plot') && isfield(dev_opts,'plot')
+        if isfield(dev_opts.plot,'bullseyes')
+            show_bullseyes=dev_opts.plot.bullseyes;
+        else
+            show_bullseyes=default_showbullseyes;
+        end
+        if isfield(dev_opts.plot,'hearts')
+            show_hearts=dev_opts.plot.hearts;
+        else
+            show_hearts=default_showhearts;
+        end
+    else
+        show_hearts=default_showhearts;
+        show_bullseyes=default_showbullseyes;
+    end
+        
+    if ~show_bullseyes
+        [~,hearts_exp{j}]=plot_BullsEye_And_Hearts(bullseye,hearts,dev_opts.numplotsperrow,dev_opts);
+    else
+        [Vq{j},hearts_exp{j}]=plot_BullsEye_And_Hearts(bullseye,hearts,dev_opts.numplotsperrow,dev_opts); 
+    end
 end
 if exist('dev_opts','var') 
-    if isfield(dev_opts,'plot') && dev_opts.plot==0
+    if isfield(dev_opts,'plot') && isfield(dev_opts.plot,'plot') && dev_opts.plot.plot==0
         close all
     end
 end
