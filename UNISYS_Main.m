@@ -13,7 +13,8 @@ function [geom,Vq,hearts_exp]=UNISYS_Main(geom,beats,fieldnames_input,fieldnames
 %           - vertices_transrot: if the original vertices were already
 %           rotated to an upright position, you don't need to do this again
 %           - contains_base: enter 0 if the geometry does not contain any
-%           basal nodes. If it does contain basal nodes, 
+%           basal nodes. If it does contain basal nodes, enter 1 or leave
+%           empty
 % beats: struct with k indices (beats(1), beats(2), etc) and some fields
 %       (e.g. beats(1).actTime, beats(1).repTime). Some of these fields will
 %       be visualized by UNISYS.
@@ -75,13 +76,13 @@ function [geom,Vq,hearts_exp]=UNISYS_Main(geom,beats,fieldnames_input,fieldnames
 %               on/off. Only works for hearts.
 %               - alpha: boolean for visible edges ('put a net over the
 %               heart'). Only works for heart, not for bullseye.
-%               - save: struct inside dev_opts containing multiple save options:
-%                   - savefile: if set to 1, files should be saved.
-%                   - fig: save matlab .fig? If yes, set to 1.
-%                   - png: save .png? If yes, set to 1.
-%                   - savename: set filename for figure/png to save.
-%                   If only a filename is specified but no full path,
-%                   results will be saved to current folder.
+%         - save: struct inside dev_opts containing multiple save options:
+%               - savefile: if set to 1, files should be saved.
+%               - fig: save matlab .fig? If yes, set to 1.
+%               - png: save .png? If yes, set to 1.
+%               - savename: set filename for figure/png to save.
+%               If only a filename is specified but no full path,
+%               results will be saved to current folder.
 %
 %
 %
@@ -398,61 +399,61 @@ if exist('dev_opts','var')
     end
 end
 end
-
-function clrbar_vals= set_clrs(numplot,lims,flipud_var,steps,map,map_spec,symmetrical)
-%Define colormap and how to display it exactly
-maxval_disp=ceil(max(lims(numplot,:))/steps)*steps;
-minval_disp=floor(min(lims(numplot,:))/steps)*steps;
-range=maxval_disp-minval_disp;
-arraylength_req= round(range/steps)+1;
-stepsize_req= range/(arraylength_req-1);
-if ~strcmp(map,'custom')
-    if ~symmetrical
-        clrmap=eval(strcat(map,'(arraylength_req)'));
-    elseif symmetrical
-        clrmap=eval(strcat('[',map,'(arraylength_req);flipud(',map,'(arraylength_req))]'));
-    end
-else
-    
-    clrarray=map_spec;
-    stepsize_old=range/(size(clrarray,1)-1);
-    
-    if stepsize_req~=stepsize_old
-        for lp_clr=1:3
-            clrmap(:,lp_clr)=interp1q((minval_disp:stepsize_old:maxval_disp)',clrarray(:,lp_clr),(minval_disp:stepsize_req:maxval_disp)');
-        end
-    else
-        clrmap=clrarray;
-    end
-end
-if flipud_var==1
-    clrmap=flipud(clrmap);
-end
-if symmetrical
-    clrmap=[clrmap;flipud(clrmap)];
-end
-
-set(gca,'CLim',[minval_disp maxval_disp]);
-colormap(gca,clrmap);
-clrbar{numplot}=colorbar('eastoutside');
-caxis([minval_disp maxval_disp])
-
-set(clrbar{numplot},'YLim',[minval_disp maxval_disp]);
-clrbar_vals= minval_disp:steps:maxval_disp;
-if length(clrbar_vals)>5
-    if range<6
-        stepsize_here=range/5;
-        clrbar_vals_disp=round(minval_disp:stepsize_here:maxval_disp,3);
-    else
-        stepsize_here=range/5;
-        clrbar_vals_disp=round(minval_disp:stepsize_here:maxval_disp);
-    end
-else
-    clrbar_vals_disp=clrbar_vals;
-end
-
-set(clrbar{numplot},'YTick',clrbar_vals_disp);
-end
+% 
+% function clrbar_vals= set_clrs(numplot,lims,flipud_var,steps,map,map_spec,symmetrical)
+% %Define colormap and how to display it exactly
+% maxval_disp=ceil(max(lims(numplot,:))/steps)*steps;
+% minval_disp=floor(min(lims(numplot,:))/steps)*steps;
+% range=maxval_disp-minval_disp;
+% arraylength_req= round(range/steps)+1;
+% stepsize_req= range/(arraylength_req-1);
+% if ~strcmp(map,'custom')
+%     if ~symmetrical
+%         clrmap=eval(strcat(map,'(arraylength_req)'));
+%     elseif symmetrical
+%         clrmap=eval(strcat('[',map,'(arraylength_req);flipud(',map,'(arraylength_req))]'));
+%     end
+% else
+%     
+%     clrarray=map_spec;
+%     stepsize_old=range/(size(clrarray,1)-1);
+%     
+%     if stepsize_req~=stepsize_old
+%         for lp_clr=1:3
+%             clrmap(:,lp_clr)=interp1q((minval_disp:stepsize_old:maxval_disp)',clrarray(:,lp_clr),(minval_disp:stepsize_req:maxval_disp)');
+%         end
+%     else
+%         clrmap=clrarray;
+%     end
+% end
+% if flipud_var==1
+%     clrmap=flipud(clrmap);
+% end
+% if symmetrical
+%     clrmap=[clrmap;flipud(clrmap)];
+% end
+% 
+% set(gca,'CLim',[minval_disp maxval_disp]);
+% colormap(gca,clrmap);
+% clrbar{numplot}=colorbar('eastoutside');
+% caxis([minval_disp maxval_disp])
+% 
+% set(clrbar{numplot},'YLim',[minval_disp maxval_disp]);
+% clrbar_vals= minval_disp:steps:maxval_disp;
+% if length(clrbar_vals)>5
+%     if range<6
+%         stepsize_here=range/5;
+%         clrbar_vals_disp=round(minval_disp:stepsize_here:maxval_disp,3);
+%     else
+%         stepsize_here=range/5;
+%         clrbar_vals_disp=round(minval_disp:stepsize_here:maxval_disp);
+%     end
+% else
+%     clrbar_vals_disp=clrbar_vals;
+% end
+% 
+% set(clrbar{numplot},'YTick',clrbar_vals_disp);
+% end
 
 
 

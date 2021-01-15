@@ -421,6 +421,8 @@ for numplot=1:maxlength
                         show_here=1;
                     elseif id_plot==numrows*numplotsperrow && show_hearts==0
                         show_here=1;
+                    elseif id_plot==length(bullseye) && show_hearts==0
+                        show_here=1;
                     else
                         show_here=0;
                     end
@@ -476,16 +478,16 @@ for numplot=1:maxlength
             if doPlot
                 subtightplot(numrows,numplotsperrow,id_plot);
             end
-            if isfield(hearts(numplot).geom,'faces')
-                faces_val=nan(size(hearts(numplot).geom.faces,1),1);
-                for i=1:length(faces_val)
-                    faces_val(i)=mode([hearts(numplot).vals(hearts(numplot).geom.faces(i,1)) hearts(numplot).vals(hearts(numplot).geom.faces(i,2)) hearts(numplot).vals(hearts(numplot).geom.faces(i,3))]);
-                end
-                hearts(numplot).faces_vals=faces_val;
-            end
+%             if isfield(hearts(numplot).geom,'faces')
+%                 faces_val=nan(size(hearts(numplot).geom.faces,1),1);
+%                 for i=1:length(faces_val)
+%                     faces_val(i)=mode([hearts(numplot).vals(hearts(numplot).geom.faces(i,1)) hearts(numplot).vals(hearts(numplot).geom.faces(i,2)) hearts(numplot).vals(hearts(numplot).geom.faces(i,3))]);
+%                 end
+%                 hearts(numplot).faces_vals=faces_val;
+%             end
             if doPlot
                 if isfield(hearts(numplot).geom,'faces')
-                    trisurf(hearts(numplot).geom.faces,hearts(numplot).geom.vertices(:,1),hearts(numplot).geom.vertices(:,2),hearts(numplot).geom.vertices(:,3),hearts(numplot).faces_vals,'EdgeAlpha',alpha,'EdgeColor',[.4 .4 .4],'FaceColor','flat');
+                    trisurf(hearts(numplot).geom.faces,hearts(numplot).geom.vertices(:,1),hearts(numplot).geom.vertices(:,2),hearts(numplot).geom.vertices(:,3),hearts(numplot).vals,'EdgeAlpha',alpha,'EdgeColor',[.4 .4 .4],'FaceColor','interp');      
                 else
                     scatter3(hearts(numplot).geom.vertices(:,1),hearts(numplot).geom.vertices(:,2),hearts(numplot).geom.vertices(:,3),10,hearts(numplot).vals,'filled')
                 end
@@ -544,7 +546,7 @@ for numplot=1:maxlength
         end
     end
     a=gcf;
-    set(a,'units','normalized','outerposition',[0 0 .5 1])
+    set(a,'units','normalized','outerposition',[0 0 1 1])
     
     if id_plot>numrows*numplotsperrow || id_plot_all==len+1
         if doPlot
@@ -562,7 +564,8 @@ for numplot=1:maxlength
                     if iscell(savename_local)
                         savename_local=savename_local{:};
                     end
-                    saveas(gcf,savename_local)
+%                     saveas(gcf,savename_local)
+                    print(gcf,savename_local,'-dpng','-r1000');
                 end
             end
             
@@ -587,8 +590,10 @@ stepsize_req= range/(arraylength_req-1);
 if ~strcmp(map,'custom')
     if ~symmetrical
         clrmap=eval(strcat(map,'(arraylength_req)'));
-    elseif symmetrical
+    elseif symmetrical && ~flipud_var
         clrmap=eval(strcat('[',map,'(arraylength_req);flipud(',map,'(arraylength_req))]'));
+    elseif symmetrical && flipud_var
+        clrmap=eval(strcat('[flipud(',map,'(arraylength_req));',map,'(arraylength_req)]'));
     end
 else
     
@@ -603,11 +608,12 @@ else
         clrmap=clrarray;
     end
 end
-if flipud_var==1
+if flipud_var && ~symmetrical
     clrmap=flipud(clrmap);
-end
-if symmetrical
+elseif ~flipud_var && symmetrical
     clrmap=[clrmap;flipud(clrmap)];
+elseif flipud_var && symmetrical
+    clrmap=[flipud(clrmap);clrmap];
 end
 
 set(gca,'CLim',[minval_disp maxval_disp]);
