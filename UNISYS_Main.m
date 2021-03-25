@@ -31,8 +31,6 @@ function [geom,Vq,hearts_exp]=UNISYS_Main(geom,beats,fieldnames_input,fieldnames
 %       be entered here. This overrules the values in the beats-struct, and
 %       will lead to a reverse transformation from UNISYS to the
 %       corresponding heart (instead of the other way around).
-%       - plot: set to 0 if you don't want to plot any data, but only get
-%       the output (like Vq)
 %       - filefolder_basalnodes (string): if basal nodes were previously defined already, 
 %       this optional field should contain the path to the basalnodes-file (.csv).
 %       Don't forget to also include filename_basalnodes.
@@ -52,7 +50,12 @@ function [geom,Vq,hearts_exp]=UNISYS_Main(geom,beats,fieldnames_input,fieldnames
 %               Set to 1 if every bullseye should contain a colorbar. 
 %               Set to 2 if only the last bullseye of a figure (so the last bullseye-subplot)
 %               should contain a colorbar. default: 1. 
-%       - clrmap: Struct containing the following optional fields with
+%               - plot: set to 0 if you don't want to plot any data, but only get
+%               the output (like Vq). If set to 0, figures will also not be saved.    
+%               - closeplot: Close every figure after plotting? (Useful if
+%               you need to plot many figures which could cause memory
+%               problems).
+%        - clrmap: Struct containing the following optional fields with
 %               visualization options and save options:
 %               - numplotsperrow: number of UNISYS plots per row (so columns)
 %               that should be visualized per figure.
@@ -118,6 +121,18 @@ else
 contains_base=1;
 end
 
+%If fieldnames_input has length 1 and is a matrix, we should treat every
+%column of this matrix separately
+if (iscell(fieldnames_input) && length(fieldnames_input)==1)
+    fieldnames_input=fieldnames_input{1};
+end
+if ischar(fieldnames_input)
+    if size(beats(1).(fieldnames_input),1)>1 && size(beats(1).(fieldnames_input),2)>1
+        fieldnames_input=repmat({fieldnames_input},[size(beats(1).(fieldnames_input),2) 1]);
+        sz_field=size(fieldnames_input,1);
+    end
+end
+
 if contains_base
     if ~isfield(geom,'verticesBasalIndFakeSide') || ~isfield(geom,'verticesBasalIndToKeepSide')
         if exist('dev_opts','var') && isfield(dev_opts,'filefolder_basalnodes') && isfield(dev_opts,'filename_basalnodes')
@@ -131,7 +146,7 @@ if contains_base
             fieldname_local=fieldnames_input;
         end
         for lp_beat=1:length(beats)
-            beats(lp_beat).(fieldname_local)(geom.verticesBasalIndFakeSide)=nan;
+            beats(lp_beat).(fieldname_local)(geom.verticesBasalIndFakeSide,:)=nan;
         end
     end
 elseif contains_base==0
@@ -158,7 +173,7 @@ for i=1:size(geom.axis_points.original,1)
     end
 end
 
-for beatnr=1:length(beats)
+for beatnr=1:length(beats) 
     if iscell(fieldnames_input)
         len_fieldnames_input=length(fieldnames_input);
     else
@@ -173,7 +188,11 @@ for beatnr=1:length(beats)
             fieldname_local=fieldnames_input;
         end
         if ~isempty(beats(beatnr).(fieldname_local))
-            vals_heart{beatnr,j}=beats(beatnr).(fieldname_local)-reference(beatnr);
+            if exist('sz_field','var') && size(beats(beatnr).(fieldname_local),2)>=j
+                vals_heart{beatnr,j}=beats(beatnr).(fieldname_local)(:,j)-reference(beatnr);
+            else
+                vals_heart{beatnr,j}=beats(beatnr).(fieldname_local)-reference(beatnr);
+            end
             
             % Define grid to plot bullseye-results on
             [XY_grid_dense,segment_labels_bullseye]=define_XY_grid_dense(360,100,1);
@@ -185,7 +204,7 @@ for beatnr=1:length(beats)
     for j=1:size(vals_heart,2)
         % Bullseye cannot take NaNs, so these values are deleted
         % Delete values which are NaNs
-       vals{beatnr,j}=vals_heart{beatnr,j};
+        vals{beatnr,j}=vals_heart{beatnr,j};
         vals{beatnr,j}(basalnodes_todelete)=[];
         othernodes_todelete{beatnr,j}=find(isnan(vals{beatnr,j})==1);
         vals{beatnr,j}(othernodes_todelete{beatnr,j})=[];
@@ -387,6 +406,7 @@ for j=1:size(vals,2)
         show_bullseyes=default_showbullseyes;
     end
         
+    dev_opts.number=num2str(j);
     if ~show_bullseyes
         [~,hearts_exp{j}]=plot_BullsEye_And_Hearts(bullseye,hearts,dev_opts.numplotsperrow,dev_opts);
     else

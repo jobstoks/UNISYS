@@ -40,6 +40,11 @@ function [Vq_exp,hearts]=plot_BullsEye_And_Hearts(bullseye,hearts,numplotsperrow
 %               Set to 1 if every bullseye should contain a colorbar. 
 %               Set to 2 if only the last bullseye of a figure (so the last bullseye-subplot)
 %               should contain a colorbar. default: 1. 
+%               - plot: set to 0 if you don't want to plot any data, but only get
+%               the output (like Vq). If set to 0, figures will also not be saved.  
+%               - closeplot: Close every figure after plotting? (Useful if
+%               you need to plot many figures which could cause memory
+%               problems).
 %       the output (like Vq)
 %       - clrmap: Struct containing the following optional fields with
 %               visualization options and save options:
@@ -103,6 +108,7 @@ default_plot=1;
 default_showhearts=1;
 default_showbullseyes=1;
 default_showclrbar=1;
+default_doClose=0;
 
 %If Vq (the values on the grid) are defined as an input: work from
 %grid, and translate back to the heart.
@@ -124,7 +130,11 @@ if exist('dev_opts','var') && isfield(dev_opts,'Vq')
     for beatnr=1:length(bullseye)
         %Pick nearest value from grid to project on heart vertices
         bullseye(beatnr).vals=Vq_all{beatnr}(ind);
-        hearts(beatnr).vals(hearts(beatnr).geom.verticesBasalIndToKeepSide)=Vq_all{beatnr}(ind);
+        try
+            hearts(beatnr).vals(hearts(beatnr).geom.verticesBasalIndToKeepSide)=Vq_all{beatnr}(ind);
+        catch
+            warning('Projection back onto the heart is not possible. Probably this is due to using a different geometry than was originally used to calculate the Vq. The number of NaNs or basal nodes may be different.')
+        end
     end
     
     alvals=[];
@@ -184,10 +194,15 @@ default_lims_identical_symmetrical=repmat([-maxabs maxabs],[max([length(hearts) 
 %Read dev_opts input field for possible visualization options
 if nargin==4 && exist('dev_opts','var')
     if isfield(dev_opts,'plot')
-        if isfield (dev_opts.plot,'plot')
+        if isfield(dev_opts.plot,'plot')
             doPlot=dev_opts.plot.plot;
         else
             doPlot=default_plot;
+        end
+        if isfield(dev_opts.plot,'closeplot')
+            doClose=dev_opts.plot.closeplot;
+        else
+            doClose=default_doClose;
         end
         if isfield(dev_opts.plot,'hearts')
             show_hearts=dev_opts.plot.hearts;
@@ -211,6 +226,7 @@ if nargin==4 && exist('dev_opts','var')
         end
     else
         doPlot=default_plot;
+        doClose=default_doClose;
         show_hearts=default_showhearts;
         show_bullseyes=default_showbullseyes;
         showbar_bullseye=default_showclrbar;
@@ -345,6 +361,7 @@ else
     map_spec=default_map_spec;
     savefile=default_savefile;
     doPlot=default_plot;
+    doClose=default_doClose;
     show_hearts=default_showhearts;
     show_bullseyes=default_showbullseyes;
     showbar_bullseye=default_showclrbar;
@@ -553,14 +570,14 @@ for numplot=1:maxlength
             loop=loop+1;
             if savefile
                 if save_fig
-                    savename_local=strcat(savename,'_',num2str(loop));
+                    savename_local=strcat(savename,'_',dev_opts.number,'_',num2str(loop));
                     if iscell(savename_local)
                         savename_local=savename_local{:};
                     end
                     savefig(savename_local);
                 end
                 if savepng
-                    savename_local=strcat(savename,'_',num2str(loop),'.png');
+                    savename_local=strcat(savename,'_',dev_opts.number,'_',num2str(loop),'.png');
                     if iscell(savename_local)
                         savename_local=savename_local{:};
                     end
@@ -572,6 +589,9 @@ for numplot=1:maxlength
             if numplot<length(bullseye)
                 figure
                 id_plot=1;
+            end
+            if doClose
+                close
             end
         end
     end
