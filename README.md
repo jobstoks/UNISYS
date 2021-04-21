@@ -15,3 +15,6 @@ Other scripts and files:
 - subtightplot.m: custom subplots with less space in between them than the default matlab subplot.
 
 - UNISYS_Logo.png: logo.
+
+Please cite as follows:
+J. Stoks, U. Chau Nguyen, R. Peeters, P. Volders, and M. Cluitmans, “An Open-Source Algorithm for Standardized Bullseye Visualization of High-Resolution Cardiac Ventricular Data: UNISYS,” Comput. Cardiol. vol. 47, Dec. 2020.
