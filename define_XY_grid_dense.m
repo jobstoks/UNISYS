@@ -1,4 +1,8 @@
-function [XY_grid_dense,segment_labels]=define_XY_grid_dense(numlines,numpointsperline,segments)
+function [XY_grid_dense,segment_labels_corrected]=define_XY_grid_dense(numlines,numpointsperline,segments,numsegments)
+
+if ~exist('numsegments','var')
+    numsegments=24;
+end
 
 pointstepsize=1/numpointsperline;
 minval=-pi;
@@ -29,9 +33,9 @@ if nargin>2
         for i=1:length(diff(theta_limits))
             for j=1:length(diff(rho_limits))
                 if i==1 && j~=1
-                   ind=find(theta1>=theta_limits(i) & theta1<=theta_limits(i+1) & rho1>rho_limits(j) & rho1<=rho_limits(j+1));
+                    ind=find(theta1>=theta_limits(i) & theta1<=theta_limits(i+1) & rho1>rho_limits(j) & rho1<=rho_limits(j+1));
                 elseif i~=1 && j~=1
-                   ind=find(theta1>theta_limits(i) & theta1<=theta_limits(i+1) & rho1>rho_limits(j) & rho1<=rho_limits(j+1));
+                    ind=find(theta1>theta_limits(i) & theta1<=theta_limits(i+1) & rho1>rho_limits(j) & rho1<=rho_limits(j+1));
                 elseif i==1 && j==1
                     ind=find(theta1>=theta_limits(i) & theta1<=theta_limits(i+1) & rho1>=rho_limits(j) & rho1<=rho_limits(j+1));
                 elseif i~=1 && j==1
@@ -46,5 +50,33 @@ if nargin>2
     end
 else
     segment_labels=nan(size(XY_grid_dense,1),1);
+end
+
+if numsegments==20
+    segment_labels(segment_labels==4)=1;
+    segment_labels(segment_labels==10)=7;
+    segment_labels(segment_labels==16)=13;
+    segment_labels(segment_labels==22)=19;
+    
+    segment_labels_corrected=segment_labels;
+    j=0;
+    for i=1:max(segment_labels)
+        %     i
+        %     j
+        if sum(segment_labels==i+j)==0
+            %        'yes'
+            segment_labels_corrected(segment_labels==i+1+j)=i;
+            %        [num2str(i+j+1) ' becomes ' num2str(i)]
+            %        [num2str(sum(segment_labels==i+1+j)) ' values were changed']
+            j=j+1;
+        else
+            %        'no'
+            segment_labels_corrected(segment_labels==i+j)=i;
+            %        [num2str(i+j) ' becomes ' num2str(i)]
+            %        [num2str(sum(segment_labels==i+j)) ' values were changed']
+        end
+    end
+else
+    segment_labels_corrected=segment_labels;
 end
 end

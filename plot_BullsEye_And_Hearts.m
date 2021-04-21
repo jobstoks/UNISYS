@@ -462,7 +462,15 @@ for numplot=1:maxlength
                 end
                 % Perpendicular straight lines
                 for n=1:length(offset_angle)
-                    plot(real([0 R]*exp(j*offset_angle(n))),imag([0 R]*exp(j*offset_angle(n))),'k-');
+                    if n==3 ||n==7
+                        plot(real([0 R]*exp(j*offset_angle(n))),imag([0 R]*exp(j*offset_angle(n))),'k-','LineWidth',1.25);
+                    else
+                        if mod(n,2)==0
+                            plot(real([R/3 R]*exp(j*offset_angle(n))),imag([R/3 R]*exp(j*offset_angle(n))),'k-');
+                        else
+                            plot(real([0 R]*exp(j*offset_angle(n))),imag([0 R]*exp(j*offset_angle(n))),'k-');
+                        end
+                    end
                 end
                 
                 if isfield(bullseye(end),'coord_of_interest') && isfield(bullseye(end).coord_of_interest,'cart_norm') && ~isempty(bullseye(end).coord_of_interest.cart_norm)

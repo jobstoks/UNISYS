@@ -136,7 +136,7 @@ end
 if contains_base
     if ~isfield(geom,'verticesBasalIndFakeSide') || ~isfield(geom,'verticesBasalIndToKeepSide')
         if exist('dev_opts','var') && isfield(dev_opts,'filefolder_basalnodes') && isfield(dev_opts,'filename_basalnodes')
-            Define_BasalNodes_Manual(dev_opts.filename_basalnodes,dev_opts.filefolder_basalnodes,geom,1)
+            geom=Define_BasalNodes_Manual(dev_opts.filename_basalnodes,dev_opts.filefolder_basalnodes,geom,1);
         else
         geom=Bullseye_define_base(geom);
         end
