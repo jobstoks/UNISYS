@@ -37,6 +37,7 @@ function [geom,Vq,hearts_exp]=UNISYS_Main(geom,beats,fieldnames_input,fieldnames
 %       - filename_basalnodes (string): if basal nodes were previously defined already, 
 %       this optional field should contain the filename of the
 %       basalnodes-file (.csv).
+%       - title: enter text here if you'd like to replace the default title above each plot by a custom title
 %       - plot: Struct containing the following optional field with visualization options:
 %               - hearts (boolean): set to 0 if hearts should not be
 %               plotted. Default: 1. 
@@ -55,11 +56,11 @@ function [geom,Vq,hearts_exp]=UNISYS_Main(geom,beats,fieldnames_input,fieldnames
 %               - closeplot: Close every figure after plotting? (Useful if
 %               you need to plot many figures which could cause memory
 %               problems).
-%        - clrmap: Struct containing the following optional fields with
-%               visualization options and save options:
 %               - numplotsperrow: number of UNISYS plots per row (so columns)
 %               that should be visualized per figure.
 %               - numrows: number of rows that should be shown per figure.
+%        - clrmap: Struct containing the following optional fields with
+%               visualization options and save options:
 %               - steps: integer containing the width of bins in the
 %               colormap, e.g. 10ms.
 %               - map: type of colormap that should be used. String, e.g. 'hot' or 'cool'. If set to 'custom',
@@ -109,9 +110,13 @@ if size(reference,1)==1 && size(reference,2)==1
     reference=repmat(reference,[length(beats) 1]);
 end
 
-% default numplotsperrow=1
-if ~exist('dev_opts','var') || ~isfield(dev_opts,'numplotsperrow')
-    dev_opts.numplotsperrow=1;
+default_numplotsperrow=1
+if ~exist('dev_opts','var')
+    dev_opts.plot.numplotsperrow=default_numplotsperrow;
+else
+    if ~isfield(dev_opts,'plot')
+        dev_opts.plot.numplotsperrow=default_numplotsperrow;
+    end
 end
 
 % %Remove values positioned at basal nodes
@@ -205,6 +210,15 @@ for beatnr=1:length(beats)
         % Bullseye cannot take NaNs, so these values are deleted
         % Delete values which are NaNs
         vals{beatnr,j}=vals_heart{beatnr,j};
+ 
+        non_basalnodes=find((1-ismember(1:length(vals{beatnr,j}),basalnodes_todelete)'));
+        if sum(isnan(vals{beatnr,j}(non_basalnodes)))>0
+            if ~isfield(geom,'NrVertices')
+                geom.NrVertices=size(geom.vertices,1);
+            end           
+            vals{beatnr,j}=interpolateElectrodes(geom,vals{beatnr,j});
+        end
+        
         vals{beatnr,j}(basalnodes_todelete)=[];
         othernodes_todelete{beatnr,j}=find(isnan(vals{beatnr,j})==1);
         vals{beatnr,j}(othernodes_todelete{beatnr,j})=[];
@@ -408,9 +422,9 @@ for j=1:size(vals,2)
         
     dev_opts.number=num2str(j);
     if ~show_bullseyes
-        [~,hearts_exp{j}]=plot_BullsEye_And_Hearts(bullseye,hearts,dev_opts.numplotsperrow,dev_opts);
+        [~,hearts_exp{j}]=plot_BullsEye_And_Hearts(bullseye,hearts,dev_opts.plot.numplotsperrow,dev_opts);
     else
-        [Vq{j},hearts_exp{j}]=plot_BullsEye_And_Hearts(bullseye,hearts,dev_opts.numplotsperrow,dev_opts); 
+        [Vq{j},hearts_exp{j}]=plot_BullsEye_And_Hearts(bullseye,hearts,dev_opts.plot.numplotsperrow,dev_opts); 
     end
 end
 if exist('dev_opts','var') 

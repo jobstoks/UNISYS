@@ -29,28 +29,26 @@ function [Vq_exp,hearts]=plot_BullsEye_And_Hearts(bullseye,hearts,numplotsperrow
 %       corresponding heart (instead of the other way around).
 %       - plot: Struct containing the following optional field with visualization options:
 %               - hearts (boolean): set to 0 if hearts should not be
-%               plotted. Default: 1. 
+%               plotted. Default: 1.
 %               - bullseyes (boolean): set to 0 if hearts should not be
-%               plotted. Default: 1. 
-%               - colorbar_hearts: Set to 0 if colorbars should not be shown. 
-%               Set to 1 if every heart should contain a colorbar. 
+%               plotted. Default: 1.
+%               - colorbar_hearts: Set to 0 if colorbars should not be shown.
+%               Set to 1 if every heart should contain a colorbar.
 %               Set to 2 if only the last heart of a figure (so the last heart-subplot)
-%               should contain a colorbar. default: 1. 
-%               - colorbar_bullseyes: Set to 0 if colorbars should not be shown. 
-%               Set to 1 if every bullseye should contain a colorbar. 
+%               should contain a colorbar. default: 1.
+%               - colorbar_bullseyes: Set to 0 if colorbars should not be shown.
+%               Set to 1 if every bullseye should contain a colorbar.
 %               Set to 2 if only the last bullseye of a figure (so the last bullseye-subplot)
-%               should contain a colorbar. default: 1. 
+%               should contain a colorbar. default: 1.
 %               - plot: set to 0 if you don't want to plot any data, but only get
-%               the output (like Vq). If set to 0, figures will also not be saved.  
+%               the output (like Vq). If set to 0, figures will also not be saved.
 %               - closeplot: Close every figure after plotting? (Useful if
 %               you need to plot many figures which could cause memory
 %               problems).
+%               - numrows: number of rows that should be shown per figure.
 %       the output (like Vq)
 %       - clrmap: Struct containing the following optional fields with
 %               visualization options and save options:
-%               - numplotsperrow: number of UNISYS plots per row (so columns)
-%               that should be visualized per figure.
-%               - numrows: number of rows that should be shown per figure.
 %               - steps: integer containing the width of bins in the
 %               colormap, e.g. 10ms.
 %               - map: type of colormap that should be used. String, e.g. 'hot' or 'cool'. If set to 'custom',
@@ -224,6 +222,11 @@ if nargin==4 && exist('dev_opts','var')
         else
             showbar_heart=default_showclrbar;
         end
+        if isfield(dev_opts.plot,'numrows')
+            numrows=dev_opts.plot.numrows;
+        else
+            numrows=default_numrows;
+        end
     else
         doPlot=default_plot;
         doClose=default_doClose;
@@ -231,6 +234,7 @@ if nargin==4 && exist('dev_opts','var')
         show_bullseyes=default_showbullseyes;
         showbar_bullseye=default_showclrbar;
         showbar_heart=default_showclrbar;
+        numrows=default_numrows;
     end
     if isfield(dev_opts,'clrmap')
         if isfield(dev_opts.clrmap,'steps')
@@ -339,11 +343,6 @@ if nargin==4 && exist('dev_opts','var')
         map_spec=default_map_spec;
         savefile=default_savefile;
     end
-    if isfield(dev_opts,'numrows')
-        numrows=dev_opts.numrows;
-    else
-        numrows=default_numrows;
-    end
     if isfield(dev_opts,'referenceObj')
         referenceObj=dev_opts.referenceObj;
     else
@@ -366,6 +365,7 @@ else
     show_bullseyes=default_showbullseyes;
     showbar_bullseye=default_showclrbar;
     showbar_heart=default_showclrbar;
+    numrows=default_numrows;
 end
 
 if ~exist('numplotsperrow','var')
@@ -392,7 +392,7 @@ set(gcf,'color','w');
 id_plot=1;
 id_plot_all=1;
 loop=0;
-   
+
 if show_hearts && show_bullseyes
     len=max([length(bullseye) length(hearts)])*2;
 elseif show_hearts && ~show_bullseyes
@@ -400,7 +400,7 @@ elseif show_hearts && ~show_bullseyes
 elseif ~show_hearts && show_bullseyes
     len=length(bullseye);
 end
-    
+
 for numplot=1:maxlength
     if show_bullseyes==1
         if numplot<=length(bullseye)
@@ -503,16 +503,16 @@ for numplot=1:maxlength
             if doPlot
                 subtightplot(numrows,numplotsperrow,id_plot);
             end
-%             if isfield(hearts(numplot).geom,'faces')
-%                 faces_val=nan(size(hearts(numplot).geom.faces,1),1);
-%                 for i=1:length(faces_val)
-%                     faces_val(i)=mode([hearts(numplot).vals(hearts(numplot).geom.faces(i,1)) hearts(numplot).vals(hearts(numplot).geom.faces(i,2)) hearts(numplot).vals(hearts(numplot).geom.faces(i,3))]);
-%                 end
-%                 hearts(numplot).faces_vals=faces_val;
-%             end
+            %             if isfield(hearts(numplot).geom,'faces')
+            %                 faces_val=nan(size(hearts(numplot).geom.faces,1),1);
+            %                 for i=1:length(faces_val)
+            %                     faces_val(i)=mode([hearts(numplot).vals(hearts(numplot).geom.faces(i,1)) hearts(numplot).vals(hearts(numplot).geom.faces(i,2)) hearts(numplot).vals(hearts(numplot).geom.faces(i,3))]);
+            %                 end
+            %                 hearts(numplot).faces_vals=faces_val;
+            %             end
             if doPlot
                 if isfield(hearts(numplot).geom,'faces')
-                    trisurf(hearts(numplot).geom.faces,hearts(numplot).geom.vertices(:,1),hearts(numplot).geom.vertices(:,2),hearts(numplot).geom.vertices(:,3),hearts(numplot).vals,'EdgeAlpha',alpha,'EdgeColor',[.4 .4 .4],'FaceColor','interp');      
+                    trisurf(hearts(numplot).geom.faces,hearts(numplot).geom.vertices(:,1),hearts(numplot).geom.vertices(:,2),hearts(numplot).geom.vertices(:,3),hearts(numplot).vals,'EdgeAlpha',alpha,'EdgeColor',[.4 .4 .4],'FaceColor','interp');
                 else
                     scatter3(hearts(numplot).geom.vertices(:,1),hearts(numplot).geom.vertices(:,2),hearts(numplot).geom.vertices(:,3),10,hearts(numplot).vals,'filled')
                 end
@@ -589,7 +589,7 @@ for numplot=1:maxlength
                     if iscell(savename_local)
                         savename_local=savename_local{:};
                     end
-%                     saveas(gcf,savename_local)
+                    %                     saveas(gcf,savename_local)
                     print(gcf,savename_local,'-dpng','-r1000');
                 end
             end

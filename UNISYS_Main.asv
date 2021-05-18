@@ -13,7 +13,8 @@ function [geom,Vq,hearts_exp]=UNISYS_Main(geom,beats,fieldnames_input,fieldnames
 %           - vertices_transrot: if the original vertices were already
 %           rotated to an upright position, you don't need to do this again
 %           - contains_base: enter 0 if the geometry does not contain any
-%           basal nodes. If it does contain basal nodes, 
+%           basal nodes. If it does contain basal nodes, enter 1 or leave
+%           empty
 % beats: struct with k indices (beats(1), beats(2), etc) and some fields
 %       (e.g. beats(1).actTime, beats(1).repTime). Some of these fields will
 %       be visualized by UNISYS.
@@ -30,8 +31,6 @@ function [geom,Vq,hearts_exp]=UNISYS_Main(geom,beats,fieldnames_input,fieldnames
 %       be entered here. This overrules the values in the beats-struct, and
 %       will lead to a reverse transformation from UNISYS to the
 %       corresponding heart (instead of the other way around).
-%       - plot: set to 0 if you don't want to plot any data, but only get
-%       the output (like Vq)
 %       - filefolder_basalnodes (string): if basal nodes were previously defined already, 
 %       this optional field should contain the path to the basalnodes-file (.csv).
 %       Don't forget to also include filename_basalnodes.
@@ -51,11 +50,16 @@ function [geom,Vq,hearts_exp]=UNISYS_Main(geom,beats,fieldnames_input,fieldnames
 %               Set to 1 if every bullseye should contain a colorbar. 
 %               Set to 2 if only the last bullseye of a figure (so the last bullseye-subplot)
 %               should contain a colorbar. default: 1. 
-%       - clrmap: Struct containing the following optional fields with
-%               visualization options and save options:
+%               - plot: set to 0 if you don't want to plot any data, but only get
+%               the output (like Vq). If set to 0, figures will also not be saved.    
+%               - closeplot: Close every figure after plotting? (Useful if
+%               you need to plot many figures which could cause memory
+%               problems).
 %               - numplotsperrow: number of UNISYS plots per row (so columns)
 %               that should be visualized per figure.
 %               - numrows: number of rows that should be shown per figure.
+%        - clrmap: Struct containing the following optional fields with
+%               visualization options and save options:
 %               - steps: integer containing the width of bins in the
 %               colormap, e.g. 10ms.
 %               - map: type of colormap that should be used. String, e.g. 'hot' or 'cool'. If set to 'custom',
@@ -75,13 +79,13 @@ function [geom,Vq,hearts_exp]=UNISYS_Main(geom,beats,fieldnames_input,fieldnames
 %               on/off. Only works for hearts.
 %               - alpha: boolean for visible edges ('put a net over the
 %               heart'). Only works for heart, not for bullseye.
-%               - save: struct inside dev_opts containing multiple save options:
-%                   - savefile: if set to 1, files should be saved.
-%                   - fig: save matlab .fig? If yes, set to 1.
-%                   - png: save .png? If yes, set to 1.
-%                   - savename: set filename for figure/png to save.
-%                   If only a filename is specified but no full path,
-%                   results will be saved to current folder.
+%         - save: struct inside dev_opts containing multiple save options:
+%               - savefile: if set to 1, files should be saved.
+%               - fig: save matlab .fig? If yes, set to 1.
+%               - png: save .png? If yes, set to 1.
+%               - savename: set filename for figure/png to save.
+%               If only a filename is specified but no full path,
+%               results will be saved to current folder.
 %
 %
 %
@@ -106,8 +110,11 @@ if size(reference,1)==1 && size(reference,2)==1
 end
 
 % default numplotsperrow=1
-if ~exist('dev_opts','var') || ~isfield(dev_opts,'numplotsperrow')
-    dev_opts.numplotsperrow=1;
+if ~exist('dev_opts','var')
+    dev_opts.plot.numplotsperrow=1;
+else
+    if ~isfield(dev_opts,'numplotsperrow')
+    dev_opts.plot.numplotsperrow=1;
 end
 
 % %Remove values positioned at basal nodes
@@ -117,10 +124,22 @@ else
 contains_base=1;
 end
 
+%If fieldnames_input has length 1 and is a matrix, we should treat every
+%column of this matrix separately
+if (iscell(fieldnames_input) && length(fieldnames_input)==1)
+    fieldnames_input=fieldnames_input{1};
+end
+if ischar(fieldnames_input)
+    if size(beats(1).(fieldnames_input),1)>1 && size(beats(1).(fieldnames_input),2)>1
+        fieldnames_input=repmat({fieldnames_input},[size(beats(1).(fieldnames_input),2) 1]);
+        sz_field=size(fieldnames_input,1);
+    end
+end
+
 if contains_base
     if ~isfield(geom,'verticesBasalIndFakeSide') || ~isfield(geom,'verticesBasalIndToKeepSide')
         if exist('dev_opts','var') && isfield(dev_opts,'filefolder_basalnodes') && isfield(dev_opts,'filename_basalnodes')
-            Define_BasalNodes_Manual(dev_opts.filename_basalnodes,dev_opts.filefolder_basalnodes,geom,1)
+            geom=Define_BasalNodes_Manual(dev_opts.filename_basalnodes,dev_opts.filefolder_basalnodes,geom,1);
         else
         geom=Bullseye_define_base(geom);
         end
@@ -130,7 +149,7 @@ if contains_base
             fieldname_local=fieldnames_input;
         end
         for lp_beat=1:length(beats)
-            beats(lp_beat).(fieldname_local)(geom.verticesBasalIndFakeSide)=nan;
+            beats(lp_beat).(fieldname_local)(geom.verticesBasalIndFakeSide,:)=nan;
         end
     end
 elseif contains_base==0
@@ -157,7 +176,7 @@ for i=1:size(geom.axis_points.original,1)
     end
 end
 
-for beatnr=1:length(beats)
+for beatnr=1:length(beats) 
     if iscell(fieldnames_input)
         len_fieldnames_input=length(fieldnames_input);
     else
@@ -172,7 +191,11 @@ for beatnr=1:length(beats)
             fieldname_local=fieldnames_input;
         end
         if ~isempty(beats(beatnr).(fieldname_local))
-            vals_heart{beatnr,j}=beats(beatnr).(fieldname_local)-reference(beatnr);
+            if exist('sz_field','var') && size(beats(beatnr).(fieldname_local),2)>=j
+                vals_heart{beatnr,j}=beats(beatnr).(fieldname_local)(:,j)-reference(beatnr);
+            else
+                vals_heart{beatnr,j}=beats(beatnr).(fieldname_local)-reference(beatnr);
+            end
             
             % Define grid to plot bullseye-results on
             [XY_grid_dense,segment_labels_bullseye]=define_XY_grid_dense(360,100,1);
@@ -184,7 +207,16 @@ for beatnr=1:length(beats)
     for j=1:size(vals_heart,2)
         % Bullseye cannot take NaNs, so these values are deleted
         % Delete values which are NaNs
-       vals{beatnr,j}=vals_heart{beatnr,j};
+        vals{beatnr,j}=vals_heart{beatnr,j};
+ 
+        non_basalnodes=find((1-ismember(1:length(vals{beatnr,j}),basalnodes_todelete)'));
+        if sum(isnan(vals{beatnr,j}(non_basalnodes)))>0
+            if ~isfield(geom,'NrVertices')
+                geom.NrVertices=size(geom.vertices,1);
+            end           
+            vals{beatnr,j}=interpolateElectrodes(geom,vals{beatnr,j});
+        end
+        
         vals{beatnr,j}(basalnodes_todelete)=[];
         othernodes_todelete{beatnr,j}=find(isnan(vals{beatnr,j})==1);
         vals{beatnr,j}(othernodes_todelete{beatnr,j})=[];
@@ -338,15 +370,20 @@ for j=1:size(vals,2)
         % Titles
         if iscell(fieldnames_disp)
             if exist('dev_opts','var') && isfield(dev_opts,'title')
-            bullseye(beatnr).title=[fieldnames_disp{j} ' ' dev_opts.title];
-            hearts(beatnr).title=[fieldnames_disp{j} ' ' dev_opts.title];
+                bullseye(beatnr).title=[fieldnames_disp{j} ' ' dev_opts.title];
+                hearts(beatnr).title=[fieldnames_disp{j} ' ' dev_opts.title];
             else
-            bullseye(beatnr).title=[fieldnames_disp{j} ' Beat ' num2str(beatnr) ' Bullseye'];
-            hearts(beatnr).title=[fieldnames_disp{j} ' Beat ' num2str(beatnr) ' Heart'];
+                bullseye(beatnr).title=[fieldnames_disp{j} ' Beat ' num2str(beatnr) ' Bullseye'];
+                hearts(beatnr).title=[fieldnames_disp{j} ' Beat ' num2str(beatnr) ' Heart'];
             end
         else
-            bullseye(beatnr).title=[fieldnames_disp ' Beat ' num2str(beatnr) ' Bullseye'];
-            hearts(beatnr).title=[fieldnames_disp ' Beat ' num2str(beatnr) ' Heart'];
+            if exist('dev_opts','var') && isfield(dev_opts,'title')
+                bullseye(beatnr).title=[fieldnames_disp ' ' dev_opts.title];
+                hearts(beatnr).title=[fieldnames_disp ' ' dev_opts.title];
+            else
+                bullseye(beatnr).title=[fieldnames_disp ' Beat ' num2str(beatnr) ' Bullseye'];
+                hearts(beatnr).title=[fieldnames_disp ' Beat ' num2str(beatnr) ' Heart'];
+            end
         end
         
         hearts(beatnr).vals=vals_heart{beatnr,j};
@@ -381,6 +418,7 @@ for j=1:size(vals,2)
         show_bullseyes=default_showbullseyes;
     end
         
+    dev_opts.number=num2str(j);
     if ~show_bullseyes
         [~,hearts_exp{j}]=plot_BullsEye_And_Hearts(bullseye,hearts,dev_opts.numplotsperrow,dev_opts);
     else
@@ -393,61 +431,61 @@ if exist('dev_opts','var')
     end
 end
 end
-
-function clrbar_vals= set_clrs(numplot,lims,flipud_var,steps,map,map_spec,symmetrical)
-%Define colormap and how to display it exactly
-maxval_disp=ceil(max(lims(numplot,:))/steps)*steps;
-minval_disp=floor(min(lims(numplot,:))/steps)*steps;
-range=maxval_disp-minval_disp;
-arraylength_req= round(range/steps)+1;
-stepsize_req= range/(arraylength_req-1);
-if ~strcmp(map,'custom')
-    if ~symmetrical
-        clrmap=eval(strcat(map,'(arraylength_req)'));
-    elseif symmetrical
-        clrmap=eval(strcat('[',map,'(arraylength_req);flipud(',map,'(arraylength_req))]'));
-    end
-else
-    
-    clrarray=map_spec;
-    stepsize_old=range/(size(clrarray,1)-1);
-    
-    if stepsize_req~=stepsize_old
-        for lp_clr=1:3
-            clrmap(:,lp_clr)=interp1q((minval_disp:stepsize_old:maxval_disp)',clrarray(:,lp_clr),(minval_disp:stepsize_req:maxval_disp)');
-        end
-    else
-        clrmap=clrarray;
-    end
-end
-if flipud_var==1
-    clrmap=flipud(clrmap);
-end
-if symmetrical
-    clrmap=[clrmap;flipud(clrmap)];
-end
-
-set(gca,'CLim',[minval_disp maxval_disp]);
-colormap(gca,clrmap);
-clrbar{numplot}=colorbar('eastoutside');
-caxis([minval_disp maxval_disp])
-
-set(clrbar{numplot},'YLim',[minval_disp maxval_disp]);
-clrbar_vals= minval_disp:steps:maxval_disp;
-if length(clrbar_vals)>5
-    if range<6
-        stepsize_here=range/5;
-        clrbar_vals_disp=round(minval_disp:stepsize_here:maxval_disp,3);
-    else
-        stepsize_here=range/5;
-        clrbar_vals_disp=round(minval_disp:stepsize_here:maxval_disp);
-    end
-else
-    clrbar_vals_disp=clrbar_vals;
-end
-
-set(clrbar{numplot},'YTick',clrbar_vals_disp);
-end
+% 
+% function clrbar_vals= set_clrs(numplot,lims,flipud_var,steps,map,map_spec,symmetrical)
+% %Define colormap and how to display it exactly
+% maxval_disp=ceil(max(lims(numplot,:))/steps)*steps;
+% minval_disp=floor(min(lims(numplot,:))/steps)*steps;
+% range=maxval_disp-minval_disp;
+% arraylength_req= round(range/steps)+1;
+% stepsize_req= range/(arraylength_req-1);
+% if ~strcmp(map,'custom')
+%     if ~symmetrical
+%         clrmap=eval(strcat(map,'(arraylength_req)'));
+%     elseif symmetrical
+%         clrmap=eval(strcat('[',map,'(arraylength_req);flipud(',map,'(arraylength_req))]'));
+%     end
+% else
+%     
+%     clrarray=map_spec;
+%     stepsize_old=range/(size(clrarray,1)-1);
+%     
+%     if stepsize_req~=stepsize_old
+%         for lp_clr=1:3
+%             clrmap(:,lp_clr)=interp1q((minval_disp:stepsize_old:maxval_disp)',clrarray(:,lp_clr),(minval_disp:stepsize_req:maxval_disp)');
+%         end
+%     else
+%         clrmap=clrarray;
+%     end
+% end
+% if flipud_var==1
+%     clrmap=flipud(clrmap);
+% end
+% if symmetrical
+%     clrmap=[clrmap;flipud(clrmap)];
+% end
+% 
+% set(gca,'CLim',[minval_disp maxval_disp]);
+% colormap(gca,clrmap);
+% clrbar{numplot}=colorbar('eastoutside');
+% caxis([minval_disp maxval_disp])
+% 
+% set(clrbar{numplot},'YLim',[minval_disp maxval_disp]);
+% clrbar_vals= minval_disp:steps:maxval_disp;
+% if length(clrbar_vals)>5
+%     if range<6
+%         stepsize_here=range/5;
+%         clrbar_vals_disp=round(minval_disp:stepsize_here:maxval_disp,3);
+%     else
+%         stepsize_here=range/5;
+%         clrbar_vals_disp=round(minval_disp:stepsize_here:maxval_disp);
+%     end
+% else
+%     clrbar_vals_disp=clrbar_vals;
+% end
+% 
+% set(clrbar{numplot},'YTick',clrbar_vals_disp);
+% end
 
 
 
