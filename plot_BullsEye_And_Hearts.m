@@ -92,7 +92,8 @@ alvals=[];
 for i=1:length(bullseye)
     alvals=[alvals; bullseye(i).vals];
 end
-default_steps=(max(alvals)-min(alvals))/25;
+notinf=find(~isinf(alvals));
+default_steps=(max(alvals(notinf))-min(alvals(notinf)))/25;
 default_map='durrermap';
 default_isolines=0;
 default_alpha=0;
@@ -111,36 +112,45 @@ default_doClose=0;
 %If Vq (the values on the grid) are defined as an input: work from
 %grid, and translate back to the heart.
 if exist('dev_opts','var') && isfield(dev_opts,'Vq')
-    
+
     %If Vq is not a cell: turn it into a cell array with length of beats
-    Vq_all=dev_opts.Vq;
-    if ~iscell(Vq_all)
-        Vq_all=repmat({Vq_all},[length(bullseye) 1]);
+    if ~iscell(dev_opts.Vq)
+        if size(dev_opts.Vq,2)>size(dev_opts.Vq,1)
+            dev_opts.Vq=dev_opts.Vq';
+        end
+        Vq_all=cell(1,length(bullseye));
+        for i=1:size(Vq_all,2)
+            Vq_all{i}=dev_opts.Vq(:,i);
+        end
+    else
+        Vq_all=dev_opts.Vq;
     end
-    
+
     %Distance from original points to grid points
     distance=nan(length(bullseye(1).X),size(bullseye(1).grid,1));
     for i=1:length(bullseye(1).X)
         distance(i,:)=sqrt((bullseye(1).X(i)-bullseye(1).grid(:,1)).^2+(bullseye(1).Y(i)-bullseye(1).grid(:,2)).^2);
     end
     [~,ind]=min(distance,[],2);
-    
-    for beatnr=1:length(bullseye)
+
+    bullseye=repmat(bullseye,[length(dev_opts.Vq) 1]);
+    for beatnr=1:size(dev_opts.Vq,2)
         %Pick nearest value from grid to project on heart vertices
-        bullseye(beatnr).vals=Vq_all{beatnr}(ind);
+        bullseye(beatnr).vals=Vq_all{beatnr};
         try
             hearts(beatnr).vals(hearts(beatnr).geom.verticesBasalIndToKeepSide)=Vq_all{beatnr}(ind);
         catch
             warning('Projection back onto the heart is not possible. Probably this is due to using a different geometry than was originally used to calculate the Vq. The number of NaNs or basal nodes may be different.')
         end
     end
-    
+
     alvals=[];
     for i=1:size(Vq_all{1},2)
         alvals=[alvals; Vq_all{1}(:,i)];
     end
-    default_steps=(max(alvals)-min(alvals))/25;
-    
+    notinf=find(~isinf(alvals));
+    default_steps=(max(alvals(notinf))-min(alvals(notinf)))/25;
+
 end
 
 
@@ -179,13 +189,15 @@ end
 default_lims_unidentical_nonsymmetrical=nan(max([length(hearts) length(bullseye)]),2);
 default_lims_unidentical_symmetrical=default_lims_unidentical_nonsymmetrical;
 for i=1:length(allvals_separated)
-    default_lims_unidentical_nonsymmetrical(i,1)=min(allvals_separated{i});
-    default_lims_unidentical_nonsymmetrical(i,2)=max(allvals_separated{i});
-    default_lims_unidentical_symmetrical(i,2)=max(abs([min(allvals_separated{i}) max(allvals_separated{i})]));
+    notinf=find(~isinf(allvals_separated{i}));
+    default_lims_unidentical_nonsymmetrical(i,1)=min(min(allvals_separated{i}(notinf)));
+    default_lims_unidentical_nonsymmetrical(i,2)=max(max(allvals_separated{i}(notinf)));
+    default_lims_unidentical_symmetrical(i,2)=max(abs([min(min(allvals_separated{i}(notinf))) max(max(allvals_separated{i}(notinf)))]));
 end
+notinf=find(~isinf(allvals));
 default_lims_unidentical_symmetrical(:,1)=-default_lims_unidentical_symmetrical(:,2);
-default_lims_identical_nonsymmetrical=repmat([min(allvals) max(allvals)],[max([length(hearts) length(bullseye)]) 1]);
-maxabs=max(abs([min(allvals) max(allvals)]));
+default_lims_identical_nonsymmetrical=repmat([min(allvals(notinf)) max(allvals(notinf))],[max([length(hearts) length(bullseye)]) 1]);
+maxabs=max(abs([min(allvals(notinf)) max(allvals(notinf))]));
 default_lims_identical_symmetrical=repmat([-maxabs maxabs],[max([length(hearts) length(bullseye)]) 1]);
 
 
@@ -315,6 +327,8 @@ if nargin==4 && exist('dev_opts','var')
                         elseif dev_opts.save.png==0
                             savepng=0;
                         end
+                    else
+                        savepng=0;
                     end
                     if isfield(dev_opts.save,'fig')
                         if dev_opts.save.fig==1
@@ -322,6 +336,8 @@ if nargin==4 && exist('dev_opts','var')
                         elseif dev_opts.save.fig==0
                             save_fig=0;
                         end
+                    else
+                        save_fig=0;
                     end
                 elseif dev_opts.save.savefile==0
                     savefile=0;
@@ -348,7 +364,7 @@ if nargin==4 && exist('dev_opts','var')
     else
         referenceObj=[];
     end
-    
+
 else
     symmetrical=default_symmetrical;
     steps=default_steps;
@@ -372,10 +388,14 @@ if ~exist('numplotsperrow','var')
     numplotsperrow=2;
 end
 if show_hearts==1 && show_bullseyes==1
-    maxlength=max([length(bullseye) length(hearts)]);
+    maxlength=max([size(bullseye,2) length(hearts)]);
     numplotsperrow=numplotsperrow*2;
 else
-    maxlength=length(bullseye);
+    if exist('Vq_all','var')
+        maxlength=length(Vq_all);
+    else
+        maxlength=size(bullseye,2);
+    end
 end
 
 if show_bullseyes==0
@@ -388,7 +408,7 @@ if doPlot
     figure
 end
 
-set(gcf,'color','w');
+set(gcf,'color',[.9 .9 .9]);
 id_plot=1;
 id_plot_all=1;
 loop=0;
@@ -420,7 +440,7 @@ for numplot=1:maxlength
                     'natural');
             end
             Vq_exp{numplot}=Vq;
-            
+
             if doPlot
                 % making triangles connecting vertices
                 tri = delaunay(bullseye(numplot).grid(:,1),bullseye(numplot).grid(:,2));
@@ -428,7 +448,7 @@ for numplot=1:maxlength
                 box off; axis equal; axis off
                 set(p(id_plot),'FaceColor','Interp','FaceVertexCData',Vq);
                 set(p(id_plot),'EdgeColor','none');
-                
+
                 if showbar_bullseye==0
                     show_here=0;
                 elseif showbar_bullseye==1
@@ -444,49 +464,52 @@ for numplot=1:maxlength
                         show_here=0;
                     end
                 end
-                
+
                 clrbar_vals= set_clrs(numplot,lims,flipud_var,steps,map,map_spec,symmetrical,show_here);
-                
-                
-                hold on
-                R=1; %radius
-                S=3;   % 'slice' nr
-                N=8;   % segment nr (rows)
-                sect_width = 2*pi/N;
-                offset_angle= 0:sect_width:2*pi-sect_width;
-                r = linspace(0,R,S+1);
-                w = 0:.01:2*pi;
-                % Circle lines
-                for n=2:length(r)
-                    plot(real(r(n)*exp(j*w)),imag(r(n)*exp(j*w)),'k-');
-                end
-                % Perpendicular straight lines
-                for n=1:length(offset_angle)
-                    if n==3 ||n==7
-                        plot(real([0 R]*exp(j*offset_angle(n))),imag([0 R]*exp(j*offset_angle(n))),'k-','LineWidth',1.25);
-                    else
-                        if mod(n,2)==0
-                            plot(real([R/3 R]*exp(j*offset_angle(n))),imag([R/3 R]*exp(j*offset_angle(n))),'k-');
+
+                if dev_opts.clrmap.numsegments~=0
+                    hold on
+                    R=1; %radius
+                    S=3;   % 'slice' nr
+                    N=8;   % segment nr (rows)
+                    sect_width = 2*pi/N;
+                    offset_angle= 0:sect_width:2*pi-sect_width;
+                    r = linspace(0,R,S+1);
+                    w = 0:.01:2*pi;
+                    % Circle lines
+                    for n=2:length(r)
+                        plot(real(r(n)*exp(j*w)),imag(r(n)*exp(j*w)),'k-');
+                    end
+                    % Perpendicular straight lines
+                    for n=1:length(offset_angle)
+                        if n==3 ||n==7
+                            plot(real([0 R]*exp(j*offset_angle(n))),imag([0 R]*exp(j*offset_angle(n))),'k-','LineWidth',1.25);
                         else
-                            plot(real([0 R]*exp(j*offset_angle(n))),imag([0 R]*exp(j*offset_angle(n))),'k-');
+                            if mod(n,2)==0 && dev_opts.clrmap.numsegments==20
+                                plot(real([R/3 R]*exp(j*offset_angle(n))),imag([R/3 R]*exp(j*offset_angle(n))),'k-');
+                            else
+                                plot(real([0 R]*exp(j*offset_angle(n))),imag([0 R]*exp(j*offset_angle(n))),'k-');
+                            end
                         end
                     end
                 end
-                
+
                 if isfield(bullseye(end),'coord_of_interest') && isfield(bullseye(end).coord_of_interest,'cart_norm') && ~isempty(bullseye(end).coord_of_interest.cart_norm)
                     plot([bullseye(end).coord_of_interest.cart_norm(1,1) bullseye(end).coord_of_interest.cart_norm(3,1)],[bullseye(end).coord_of_interest.cart_norm(1,2) bullseye(end).coord_of_interest.cart_norm(3,2)],'k--','LineWidth',3)
                     plot([bullseye(end).coord_of_interest.cart_norm(1,1) bullseye(end).coord_of_interest.cart_norm(4,1)],[bullseye(end).coord_of_interest.cart_norm(1,2) bullseye(end).coord_of_interest.cart_norm(4,2)],'k--','LineWidth',3)
                     %             scatter(bullseye(end).coord_of_interest.cart_norm(6,1),bullseye(end).coord_of_interest.cart_norm(6,2),50,'filled','k')
-                    
+
                     dist_to_side=1-(bullseye(end).coord_of_interest.cart_norm(6,1).^2+bullseye(end).coord_of_interest.cart_norm(6,2).^2);
                 end
-                
+
                 if numplot<=length(hearts)
-                    if min(hearts(numplot).vals(~isnan(hearts(numplot).vals)))~=min(bullseye(numplot).vals(~isnan(bullseye(numplot).vals))) || max(hearts(numplot).vals(~isnan(hearts(numplot).vals)))~=max(bullseye(numplot).vals(~isnan(bullseye(numplot).vals)))
+                    if abs((max(hearts(numplot).vals(~isnan(hearts(numplot).vals)))-min(hearts(numplot).vals(~isnan(hearts(numplot).vals)))) -...
+                            (max(bullseye(numplot).vals(~isnan(bullseye(numplot).vals)))-min(bullseye(numplot).vals(~isnan(bullseye(numplot).vals)))))...
+                            > .1*(max(bullseye(numplot).vals(~isnan(bullseye(numplot).vals)))-min(bullseye(numplot).vals(~isnan(bullseye(numplot).vals))))
                         warning('The corresponding heart has a different color value range!')
                     end
                 end
-                
+
                 if isfield(bullseye(numplot),'title')
                     title(bullseye(numplot).title)
                 else
@@ -497,36 +520,21 @@ for numplot=1:maxlength
             id_plot_all= id_plot_all+1;
         end
     end
-    
+
     if show_hearts==1
         if numplot<=length(hearts)
             if doPlot
-                subtightplot(numrows,numplotsperrow,id_plot);
-            end
-            %             if isfield(hearts(numplot).geom,'faces')
-            %                 faces_val=nan(size(hearts(numplot).geom.faces,1),1);
-            %                 for i=1:length(faces_val)
-            %                     faces_val(i)=mode([hearts(numplot).vals(hearts(numplot).geom.faces(i,1)) hearts(numplot).vals(hearts(numplot).geom.faces(i,2)) hearts(numplot).vals(hearts(numplot).geom.faces(i,3))]);
-            %                 end
-            %                 hearts(numplot).faces_vals=faces_val;
-            %             end
-            if doPlot
+                sp_hearts(numplot)=subtightplot(numrows,numplotsperrow,id_plot);
+
                 if isfield(hearts(numplot).geom,'faces')
                     trisurf(hearts(numplot).geom.faces,hearts(numplot).geom.vertices(:,1),hearts(numplot).geom.vertices(:,2),hearts(numplot).geom.vertices(:,3),hearts(numplot).vals,'EdgeAlpha',alpha,'EdgeColor',[.4 .4 .4],'FaceColor','interp');
                 else
-                    scatter3(hearts(numplot).geom.vertices(:,1),hearts(numplot).geom.vertices(:,2),hearts(numplot).geom.vertices(:,3),10,hearts(numplot).vals,'filled')
+                    scatter3(hearts(numplot).geom.vertices(:,1),hearts(numplot).geom.vertices(:,2),hearts(numplot).geom.vertices(:,3),45,hearts(numplot).vals,'filled')
                 end
-                
-                
+
+                shading interp
                 box off; axis equal;  axis off
-                %         colormap(clrmap);
-                %         colorbar('eastoutside');
-                %         if isfield(hearts(numplot),'clr_lims')
-                %             caxis(hearts(numplot).clr_lims);
-                %         else
-                %             caxis([min(hearts(numplot).vals) max(hearts(numplot).vals)])
-                %         end
-                
+
                 if showbar_heart==0
                     show_here=0;
                 elseif showbar_heart==1
@@ -539,27 +547,34 @@ for numplot=1:maxlength
                     end
                 end
                 clrbar_vals= set_clrs(numplot,lims,flipud_var,steps,map,map_spec,symmetrical,show_here);
-                
+                if ~isempty(referenceObj)
+                    if isfield(referenceObj,'faces')
+                        hold on, trisurf(referenceObj.faces,referenceObj.vertices(:,1),referenceObj.vertices(:,2),referenceObj.vertices(:,3),'EdgeAlpha',0,'FaceColor',[.3 .3 .3]);
+                    else
+                        hold on, scatter3(referenceObj.vertices(:,1),referenceObj.vertices(:,2),referenceObj.vertices(:,3),45,[.4 .4 .4],'filled')
+                    end
+                end
+
                 if isfield(bullseye(end),'coord_of_interest') && isfield(bullseye(end).coord_of_interest,'cartesian') && ~isempty(bullseye(end).coord_of_interest.cartesian)
                     %             for i=[1 3 4 6]
                     %                 hold on, scatter3(hearts(end).geom.vertices(bullseye(end).coord_of_interest.vert_ind(i),1),hearts(end).geom.vertices(bullseye(end).coord_of_interest.vert_ind(i),2),hearts(end).geom.vertices(bullseye(end).coord_of_interest.vert_ind(i),3),200,'filled','k')
                     %             end
-                    
+
                     %             plot3([hearts(end).geom.vertices(bullseye(end).coord_of_interest.vert_ind(1),1) hearts(end).geom.vertices(bullseye(end).coord_of_interest.vert_ind(3),1) hearts(end).geom.vertices(bullseye(end).coord_of_interest.vert_ind(4),1) hearts(end).geom.vertices(bullseye(end).coord_of_interest.vert_ind(1),1)],...
                     %                 [hearts(end).geom.vertices(bullseye(end).coord_of_interest.vert_ind(1),2) hearts(end).geom.vertices(bullseye(end).coord_of_interest.vert_ind(3),2) hearts(end).geom.vertices(bullseye(end).coord_of_interest.vert_ind(4),2) hearts(end).geom.vertices(bullseye(end).coord_of_interest.vert_ind(1),2)],...
                     %                 [hearts(end).geom.vertices(bullseye(end).coord_of_interest.vert_ind(1),3) hearts(end).geom.vertices(bullseye(end).coord_of_interest.vert_ind(3),3) hearts(end).geom.vertices(bullseye(end).coord_of_interest.vert_ind(4),3) hearts(end).geom.vertices(bullseye(end).coord_of_interest.vert_ind(1),3)],'LineWidth',3,'Color','k')
                 end
-                
+
                 if isolines==1 && isfield(hearts(numplot).geom,'faces') && exist('clrbar_vals','var')
                     clear isocell
                     isocell{1}=hearts(numplot).geom.faces;
                     isocell{2}=hearts(numplot).geom.vertices;
-                    
+
                     for lp_isolines=1:length(clrbar_vals)
                         IsoLine(isocell,hearts(numplot).vals,[clrbar_vals(lp_isolines) clrbar_vals(lp_isolines)],[.2 .2 .2],.1);
                     end
                 end
-                
+
                 if isfield(hearts(numplot),'title')
                     title(hearts(numplot).title)
                 else
@@ -569,10 +584,11 @@ for numplot=1:maxlength
                 id_plot_all= id_plot_all+1;
             end
         end
+        if ~show_bullseyes
+            Vq_exp{numplot}=bullseye(numplot).vals;
+        end
     end
-    a=gcf;
-    set(a,'units','normalized','outerposition',[0 0 1 1])
-    
+
     if id_plot>numrows*numplotsperrow || id_plot_all==len+1
         if doPlot
             loop=loop+1;
@@ -589,12 +605,11 @@ for numplot=1:maxlength
                     if iscell(savename_local)
                         savename_local=savename_local{:};
                     end
-                    %                     saveas(gcf,savename_local)
-                    print(gcf,savename_local,'-dpng','-r1000');
+                    print(gcf,savename_local,'-dpng','-r500');
                 end
             end
-            
-            if numplot<length(bullseye)
+
+            if numplot<size(bullseye,2)
                 figure
                 id_plot=1;
             end
@@ -604,7 +619,16 @@ for numplot=1:maxlength
         end
     end
 end
-
+a=gcf;
+set(a,'units','normalized','outerposition',[0 0 1 1])
+if exist('sp_hearts','var') && isvalid(sp_hearts)
+    linkaxes(sp_hearts,'xyz');
+    Link = linkprop(sp_hearts, ...
+        {'CameraPosition', 'CameraTarget', ...
+        'CameraUpVector', 'CameraViewAngle', ...
+        'XLim', 'YLim', 'ZLim'});
+    setappdata(gcf, 'StoreTheLink', Link);
+end
 end
 
 %% functions used in this script
@@ -613,8 +637,8 @@ function clrbar_vals= set_clrs(numplot,lims,flipud_var,steps,map,map_spec,symmet
 maxval_disp=ceil(max(lims(numplot,:))/steps)*steps;
 minval_disp=floor(min(lims(numplot,:))/steps)*steps;
 range=maxval_disp-minval_disp;
-arraylength_req= round(range/steps)+1;
-stepsize_req= range/(arraylength_req-1);
+arraylength_req= round(range/steps);
+stepsize_req= range/(arraylength_req);
 if ~strcmp(map,'custom')
     if ~symmetrical
         clrmap=eval(strcat(map,'(arraylength_req)'));
@@ -624,10 +648,10 @@ if ~strcmp(map,'custom')
         clrmap=eval(strcat('[flipud(',map,'(arraylength_req));',map,'(arraylength_req)]'));
     end
 else
-    
+
     clrarray=map_spec;
     stepsize_old=range/(size(clrarray,1)-1);
-    
+
     if stepsize_req~=stepsize_old
         for lp_clr=1:3
             clrmap(:,lp_clr)=interp1q((minval_disp:stepsize_old:maxval_disp)',clrarray(:,lp_clr),(minval_disp:stepsize_req:maxval_disp)');
@@ -643,29 +667,28 @@ elseif ~flipud_var && symmetrical
 elseif flipud_var && symmetrical
     clrmap=[flipud(clrmap);clrmap];
 end
+clrmap=[.9 .9 .9; clrmap];
 
-set(gca,'CLim',[minval_disp maxval_disp]);
+set(gca,'CLim',[minval_disp-stepsize_req maxval_disp]);
 colormap(gca,clrmap);
-caxis([minval_disp maxval_disp])
+clim([minval_disp-stepsize_req maxval_disp]);
+
+clrbar_vals= minval_disp:steps:maxval_disp;
+if length(clrbar_vals)>5
+    if range<6
+        stepsize_here=range/5;
+        clrbar_vals_disp=round(minval_disp:stepsize_here:maxval_disp,3);
+    else
+        stepsize_here=range/5;
+        clrbar_vals_disp=round(minval_disp:stepsize_here:maxval_disp);
+    end
+else
+    clrbar_vals_disp=clrbar_vals;
+end
 
 if showbar
-    clrbar{numplot}=colorbar('eastoutside');
+    clrbar{numplot}=colorbar('southoutside');
     set(clrbar{numplot},'YLim',[minval_disp maxval_disp]);
-    clrbar_vals= minval_disp:steps:maxval_disp;
-    if length(clrbar_vals)>5
-        if range<6
-            stepsize_here=range/5;
-            clrbar_vals_disp=round(minval_disp:stepsize_here:maxval_disp,3);
-        else
-            stepsize_here=range/5;
-            clrbar_vals_disp=round(minval_disp:stepsize_here:maxval_disp);
-        end
-    else
-        clrbar_vals_disp=clrbar_vals;
-    end
-    
     set(clrbar{numplot},'YTick',clrbar_vals_disp);
-else
-    clrbar_vals=[];
 end
 end

@@ -20,8 +20,13 @@ else
     % Ask for the apical point of the LV/RV division plane
     title('Define the LV/RV division plane');
     msgbox('First select the most apical point of LV/RV division plane with the data cursor. Then press space');
-    h=datacursormode;
-    pause; set(gcf,'CurrentCharacter',char(1)); cursor_info = getCursorInfo(h); p1 = cursor_info.Position; scatter3(p1(1),p1(2),p1(3),200,'y','filled'); figure(fig);
+   pause
+   h=datacursormode;
+    
+    set(gcf,'CurrentCharacter',char(1)); 
+    cursor_info = getCursorInfo(h); 
+    p1 = cursor_info.Position; 
+    scatter3(p1(1),p1(2),p1(3),200,'y','filled'); figure(fig);
     
     %Ask for the 2 remaining (basal) points of the LV/RV division plane
     msgbox('Now select the second and third (basal) points of the LV/RV division plane. Press space after selection of each point.');

@@ -37,6 +37,8 @@ function [geom,Vq,hearts_exp]=UNISYS_Main(geom,beats,fieldnames_input,fieldnames
 %       - filename_basalnodes (string): if basal nodes were previously defined already, 
 %       this optional field should contain the filename of the
 %       basalnodes-file (.csv).
+%       - referenceObj: reference object (also containing faces and vertices, similarly to 'geom'),
+%       e.g., bloodpool and aorta.
 %       - title: enter text here if you'd like to replace the default title above each plot by a custom title
 %       - plot: Struct containing the following optional field with visualization options:
 %               - hearts (boolean): set to 0 if hearts should not be
@@ -80,6 +82,9 @@ function [geom,Vq,hearts_exp]=UNISYS_Main(geom,beats,fieldnames_input,fieldnames
 %               on/off. Only works for hearts.
 %               - alpha: boolean for visible edges ('put a net over the
 %               heart'). Only works for heart, not for bullseye.
+%               - numsegments: if set to 20, 20(including 4 apical ones) segments will be plotted.
+%               Otherwise, 24 segments will be plotted (So 8 apical
+%               segments).
 %         - save: struct inside dev_opts containing multiple save options:
 %               - savefile: if set to 1, files should be saved.
 %               - fig: save matlab .fig? If yes, set to 1.
@@ -110,11 +115,11 @@ if size(reference,1)==1 && size(reference,2)==1
     reference=repmat(reference,[length(beats) 1]);
 end
 
-default_numplotsperrow=1
+default_numplotsperrow=1;
 if ~exist('dev_opts','var')
     dev_opts.plot.numplotsperrow=default_numplotsperrow;
 else
-    if ~isfield(dev_opts,'plot')
+    if ~isfield(dev_opts,'plot') || (isfield(dev_opts,'plot') && ~isfield(dev_opts.plot,'numplotsperrow'))
         dev_opts.plot.numplotsperrow=default_numplotsperrow;
     end
 end
@@ -138,6 +143,18 @@ if ischar(fieldnames_input)
     end
 end
 
+% Turn reference and fields into doubles
+reference=double(reference);
+for beatnr=1:length(beats)
+    if ischar(fieldnames_input)
+        beats(beatnr).(fieldnames_input)=double(beats(beatnr).(fieldnames_input));
+    else
+    for lp_fn=1:length(fieldnames_input)
+        beats(beatnr).(fieldnames_input{lp_fn})=double(beats(beatnr).(fieldnames_input{lp_fn}));
+    end
+    end
+end
+
 if contains_base
     if ~isfield(geom,'verticesBasalIndFakeSide') || ~isfield(geom,'verticesBasalIndToKeepSide')
         if exist('dev_opts','var') && isfield(dev_opts,'filefolder_basalnodes') && isfield(dev_opts,'filename_basalnodes')
@@ -145,18 +162,20 @@ if contains_base
         else
         geom=Bullseye_define_base(geom);
         end
-        if iscell(fieldnames_input)
-            fieldname_local=fieldnames_input{:};
-        else
-            fieldname_local=fieldnames_input;
-        end
-        for lp_beat=1:length(beats)
-            beats(lp_beat).(fieldname_local)(geom.verticesBasalIndFakeSide,:)=nan;
-        end
     end
+
 elseif contains_base==0
     geom.verticesBasalIndFakeSide=[];
     geom.verticesBasalIndToKeepSide=1:size(geom.vertices,1);
+end
+
+if iscell(fieldnames_input)
+    fieldname_local=fieldnames_input{:};
+else
+    fieldname_local=fieldnames_input;
+end
+for lp_beat=1:length(beats)
+    beats(lp_beat).(fieldname_local)(geom.verticesBasalIndFakeSide,:)=nan;
 end
 
 % Transform geometry to be perfectly upright, with apex on top
@@ -164,8 +183,17 @@ if ~isfield(geom,'vertices_transrot')
     geom=make_axis(geom);
 end
 
+% Set number of segments
+default_numsegments=24;
+if exist('dev_opts','var') && isfield(dev_opts,'clrmap') && isfield(dev_opts.clrmap,'numsegments') && ~isempty(dev_opts.clrmap.numsegments)
+    numsegments=dev_opts.clrmap.numsegments;
+else
+    numsegments=default_numsegments;
+    dev_opts.clrmap.numsegments=numsegments;
+end
+
 % Save some coordinates of interest. The nearest vertex from the original
-% heart will be used saved for each coordinate of interest.
+% heart will be saved for each coordinate of interest.
 coord_interest.vert_ind=[];
 for i=1:size(geom.axis_points.original,1)
     diff=nan(size(geom.vertices_transrot,1),1);
@@ -200,7 +228,7 @@ for beatnr=1:length(beats)
             end
             
             % Define grid to plot bullseye-results on
-            [XY_grid_dense,segment_labels_bullseye]=define_XY_grid_dense(360,100,1);
+            [XY_grid_dense,segment_labels_bullseye]=define_XY_grid_dense(360,100,1,numsegments);
             load('cmap_uyen');
         end
     end
@@ -212,22 +240,21 @@ for beatnr=1:length(beats)
         vals{beatnr,j}=vals_heart{beatnr,j};
  
         non_basalnodes=find((1-ismember(1:length(vals{beatnr,j}),basalnodes_todelete)'));
-        if sum(isnan(vals{beatnr,j}(non_basalnodes)))>0
-            if ~isfield(geom,'NrVertices')
-                geom.NrVertices=size(geom.vertices,1);
-            end           
-            vals{beatnr,j}=interpolateElectrodes(geom,vals{beatnr,j});
-        end
+%         if sum(isnan(vals{beatnr,j}(non_basalnodes)))>0
+%             if ~isfield(geom,'NrVertices')
+%                 geom.NrVertices=size(geom.vertices,1);
+%             end           
+%             vals{beatnr,j}=interpolateElectrodes(geom,vals{beatnr,j});
+%         end
         
         vals{beatnr,j}(basalnodes_todelete)=[];
-        othernodes_todelete{beatnr,j}=find(isnan(vals{beatnr,j})==1);
-        vals{beatnr,j}(othernodes_todelete{beatnr,j})=[];
+        othernodes_todelete{beatnr,j}=find(isnan(vals{beatnr,j}));
+        vals{beatnr,j}(othernodes_todelete{beatnr,j})=-inf;
         vals_heart{beatnr,j}(basalnodes_todelete)=nan;
         
         % Delete vertices associated with NaN-values
         cart_coord{beatnr,j}=geom.vertices_transrot;
         cart_coord{beatnr,j}(basalnodes_todelete,:)=[];
-        cart_coord{beatnr,j}(othernodes_todelete{beatnr,j},:)=[];
         cart_coord{beatnr,j}=[cart_coord{beatnr,j}; coord_interest.cartesian];
         
         % Transform carthesian coordinates to ellipsoid coordinates
@@ -396,12 +423,7 @@ for j=1:size(vals,2)
     end
     
     %Plot
-    
-    %     dev_opts.Vq=plot_BullsEye_And_Hearts(bullseye,hearts,dev_opts.numplotsperrow,dev_opts);
-    %         bullseye(beatnr).coord_of_interest=coord_interest;
-    %         dev_opts.Vq=segment_labels_bullseye;
-
-    
+   
     default_showbullseyes=1;
     default_showhearts=1;
     if isfield(dev_opts,'plot') && isfield(dev_opts,'plot')
@@ -423,6 +445,7 @@ for j=1:size(vals,2)
     dev_opts.number=num2str(j);
     if ~show_bullseyes
         [~,hearts_exp{j}]=plot_BullsEye_And_Hearts(bullseye,hearts,dev_opts.plot.numplotsperrow,dev_opts);
+        Vq{j}=[];
     else
         [Vq{j},hearts_exp{j}]=plot_BullsEye_And_Hearts(bullseye,hearts,dev_opts.plot.numplotsperrow,dev_opts); 
     end

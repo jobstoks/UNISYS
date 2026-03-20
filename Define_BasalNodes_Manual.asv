@@ -49,11 +49,11 @@ if exist(fullfile(loadfolder,filename_load),'file')
         neighbors_here=neighbors_here(:);
         neighbors_here=unique(neighbors_here(neighbors_here~=nodenr));
 
-        if sum(ismember(geom.verticesBasalIndToKeepSide,neighbors_here))<2
+        if sum(~isnan(beats(ids_beats_todo).depTimingInMsTikhAllNodes(neighbors_here)))<2
 
 
-            geom.verticesBasalIndFakeSide=[geom.verticesBasalIndFakeSide; nodenr];
-            geom.verticesBasalIndToKeepSide=geom.verticesBasalIndToKeepSide(~ismember(geom.verticesBasalIndToKeepSide,nodenr));
+        geom.verticesBasalIndFakeSide=[geom.verticesBasalIndFakeSide; nodenr];
+        geom.verticesBasalIndToKeepSide=geom.verticesBasalIndToKeepSide(~ismember(geom.verticesBasalIndToKeepSide,nodenr));
         end
 
     end
