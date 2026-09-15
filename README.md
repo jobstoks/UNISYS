@@ -35,7 +35,7 @@ Other scripts:
 
 - The S-TVMs tool is available a https://112.124.26.17:7013/visual2D3D
 
-# Quickstart
+# Quickstart (S-TVMs)
 Data Preparation
 
 Download the dog torso and epicardial recordings dataset from the EDGAR database:
@@ -46,6 +46,7 @@ Save the downloaded data to your MATLAB working directory before running the scr
 
 
 % --- Step 1: Construct and save the GeomBeats structure ---
+
 GeomBeats=struct;
 GeomBeats.geom.Heart.vertices = hart.node;
 GeomBeats.geom.Heart.faces = hart.face;
@@ -57,10 +58,14 @@ GeomBeats.beats.bodyPots = lichaampots;
 
 save(mypath,'GeomBeats')
 
+
 % --- Step 2: Generate 2D/3D ventricle representation ---
+
 ventricle_2D3D(mypath,1,50,[540, 790,1139,873], 'potsTikhonov',jet)
 
+
 % --- Step 3: Generate 2D/3D torso representation ---
+
 torso_2D3D(mypath, 1,50,[122,12,81,132],'kriging',60,60,70)
 
 
