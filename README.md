@@ -48,12 +48,17 @@ Save the downloaded data to your MATLAB working directory before running the scr
 % --- Step 1: Construct and save the GeomBeats structure ---
 
 GeomBeats=struct;
+
 GeomBeats.geom.Heart.vertices = hart.node;
+
 GeomBeats.geom.Heart.faces = hart.face;
+
 GeomBeats.beats.potsTikhonov = hartpots;
 
 GeomBeats.geom.Body.vertices = lichaam.node;
+
 GeomBeats.geom.Body.faces =  lichaam.face;
+
 GeomBeats.beats.bodyPots = lichaampots;
 
 save(mypath,'GeomBeats')
