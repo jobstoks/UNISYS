@@ -18,17 +18,18 @@ Other scripts and files:
 
 # Standardized 2D Torso and Ventricle Maps (S-TVMs)
 Transform subject-specific 3D torso and ventricle geometries into standardized 2D/3D representations.
+
 Main script to use: ventricle_2D3D.m. generate 2D (bullseye for whole ventircle, full square plot)and 3D bowl-shaped representation.
                     torso_2D3D.m. generate full square plot and elliptical cylinder representation.
 
-Other scripts and files:
-rotate_xyz1.m: achieve standardized position and orientation for torso
-newindex.m: generate new vertices and faces based on new indices
-krigingWeights.m: compute the kridging weights
-krigingInterpolation.m: kriging interpolation based on the kriging weights
-fun_x1.m, fun_y1.m, fun_zx.m: used in rotate_xyz1.m
-findOpeningTrodeSaveFaces.m: find the opening line for the torso, generate the coordinates for unfolded torso surface.
-boundaryVerticesAndallLines.m: generate the lines and boundary based on faces
-boundaryOrder.m: generate the ordered boundary lines and vertices
+Other scripts:
+- rotate_xyz1.m: achieve standardized position and orientation for torso
+- newindex.m: generate new vertices and faces based on new indices
+- krigingWeights.m: compute the kridging weights
+- krigingInterpolation.m: kriging interpolation based on the kriging weights
+- fun_x1.m, fun_y1.m, fun_zx.m: used in rotate_xyz1.m
+- findOpeningTrodeSaveFaces.m: find the opening line for the torso, generate the coordinates for unfolded torso surface.
+- boundaryVerticesAndallLines.m: generate the lines and boundary based on faces
+- boundaryOrder.m: generate the ordered boundary lines and vertices
 
-The S-TVMs tool is available a https://112.124.26.17:7013/visual2D3D
+- The S-TVMs tool is available a https://112.124.26.17:7013/visual2D3D
