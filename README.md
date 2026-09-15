@@ -32,20 +32,21 @@ Other scripts:
 - findOpeningTrodeSaveFaces.m: find the opening line for the torso, generate the coordinates for unfolded torso surface.
 - boundaryVerticesAndallLines.m: generate the lines and boundary based on faces
 - boundaryOrder.m: generate the ordered boundary lines and vertices
+- results.jpg: visualization of 2D/3D torso and ventricle generated using the data from the following Quickstart
 
 - The S-TVMs tool is available a https://112.124.26.17:7013/visual2D3D
 
 # Quickstart (S-TVMs)
-Data Preparation
+## step 1: Data Preparation
 
-Download the dog torso and epicardial recordings dataset from the EDGAR database:
+Download the dog torso and ventricle dataset from the EDGAR database:
 
 https://edgar.sci.utah.edu/2025/07/09/dog-torso-and-epicardial-recordings-w-pacing-maastricht-15-09-06/
 
 Save the downloaded data to your MATLAB working directory before running the script.
 
 
-% --- Step 1: Construct and save the GeomBeats structure ---
+## step 2: Construct and save the GeomBeats structure
 
 GeomBeats=struct;
 
@@ -64,12 +65,12 @@ GeomBeats.beats.bodyPots = lichaampots;
 save(mypath,'GeomBeats')
 
 
-% --- Step 2: Generate 2D/3D ventricle representation ---
+## Step 3: Generate 2D/3D ventricle representation
 
 ventricle_2D3D(mypath,1,50,[540, 790,1139,873], 'potsTikhonov',jet)
 
 
-% --- Step 3: Generate 2D/3D torso representation ---
+## Step 4: Generate 2D/3D torso representation
 
 torso_2D3D(mypath, 1,50,[122,12,81,132],'kriging',60,60,70)
 
