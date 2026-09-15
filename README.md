@@ -15,3 +15,52 @@ Other scripts and files:
 - subtightplot.m: custom subplots with less space in between them than the default matlab subplot.
 
 - UNISYS_Logo.png: logo.
+
+# Standardized 2D Torso and Ventricle Maps (S-TVMs)
+Transform subject-specific 3D torso and ventricle geometries into standardized 2D/3D representations.
+
+Main script to use
+- ventricle_2D3D.m: generate 2D (bullseye for whole ventircle, full square plot)and 3D bowl-shaped representation.
+- torso_2D3D.m: generate full square plot and elliptical cylinder representation.
+
+Other scripts:
+- rotate_xyz1.m: achieve standardized position and orientation for torso
+- newindex.m: generate new vertices and faces based on new indices
+- krigingWeights.m: compute the kridging weights
+- krigingInterpolation.m: kriging interpolation based on the kriging weights
+- fun_x1.m, fun_y1.m, fun_zx.m: used in rotate_xyz1.m
+- findOpeningTrodeSaveFaces.m: find the opening line for the torso, generate the coordinates for unfolded torso surface.
+- boundaryVerticesAndallLines.m: generate the lines and boundary based on faces
+- boundaryOrder.m: generate the ordered boundary lines and vertices
+
+- The S-TVMs tool is available a https://112.124.26.17:7013/visual2D3D
+
+# Quickstart
+Data Preparation
+
+Download the dog torso and epicardial recordings dataset from the EDGAR database:
+
+https://edgar.sci.utah.edu/2025/07/09/dog-torso-and-epicardial-recordings-w-pacing-maastricht-15-09-06/
+
+Save the downloaded data to your MATLAB working directory before running the script.
+
+
+% --- Step 1: Construct and save the GeomBeats structure ---
+GeomBeats=struct;
+GeomBeats.geom.Heart.vertices = hart.node;
+GeomBeats.geom.Heart.faces = hart.face;
+GeomBeats.beats.potsTikhonov = hartpots;
+
+GeomBeats.geom.Body.vertices = lichaam.node;
+GeomBeats.geom.Body.faces =  lichaam.face;
+GeomBeats.beats.bodyPots = lichaampots;
+
+save(mypath,'GeomBeats')
+
+% --- Step 2: Generate 2D/3D ventricle representation ---
+ventricle_2D3D(mypath,1,50,[540, 790,1139,873], 'potsTikhonov',jet)
+
+% --- Step 3: Generate 2D/3D torso representation ---
+torso_2D3D(mypath, 1,50,[122,12,81,132],'kriging',60,60,70)
+
+
