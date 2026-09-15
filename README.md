@@ -19,8 +19,9 @@ Other scripts and files:
 # Standardized 2D Torso and Ventricle Maps (S-TVMs)
 Transform subject-specific 3D torso and ventricle geometries into standardized 2D/3D representations.
 
-Main script to use: ventricle_2D3D.m. generate 2D (bullseye for whole ventircle, full square plot)and 3D bowl-shaped representation.
-                    torso_2D3D.m. generate full square plot and elliptical cylinder representation.
+Main script to use
+- ventricle_2D3D.m: generate 2D (bullseye for whole ventircle, full square plot)and 3D bowl-shaped representation.
+- torso_2D3D.m: generate full square plot and elliptical cylinder representation.
 
 Other scripts:
 - rotate_xyz1.m: achieve standardized position and orientation for torso
