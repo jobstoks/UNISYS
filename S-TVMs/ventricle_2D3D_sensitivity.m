@@ -1,4 +1,7 @@
 function ventricle_2D3D_sensitivity(mypath,beat_nr,ind_time,inds_ref,fieldname,times, num_trials)
+% times: the distance between the candidate vertices and the landmark should be no more than times x mean_edge_length
+% num_trials: the number of sampling trials
+
 close all;
 GeomBeats = load(mypath);
 geom=GeomBeats.GeomBeats.geom; beats=GeomBeats.GeomBeats.beats;
