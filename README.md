@@ -17,7 +17,7 @@ Other scripts and files:
 - UNISYS_Logo.png: logo.
 
 # Standardized 2D Torso and Ventricle Maps (S-TVMs)
-Transform subject-specific 3D torso and ventricle geometries into standardized 2D/3D representations.
+Transform subject-specific 3D torso and ventricle geometries into standardized 2D/3D representations using **MATLAB R2023b**. No additional toolboxes are needed.
 
 Main script to use
 - ventricle_2D3D.m: generate 2D (bullseye for whole ventricle, full square plot) and 3D bowl-shaped representation.
