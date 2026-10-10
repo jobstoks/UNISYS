@@ -20,14 +20,14 @@ Other scripts and files:
 Transform subject-specific 3D torso and ventricle geometries into standardized 2D/3D representations.
 
 Main script to use
-- ventricle_2D3D.m: generate 2D (bullseye for whole ventircle, full square plot)and 3D bowl-shaped representation.
+- ventricle_2D3D.m: generate 2D (bullseye for whole ventricle, full square plot) and 3D bowl-shaped representation.
 - torso_2D3D.m: generate full square plot and elliptical cylinder representation.
 - ventricle_2D3D_sensitivity.m: generate new standardized ventricles via Monte Carlo perturbation of all four landmarks.
 
 Other scripts:
 - rotate_xyz1.m: achieve standardized position and orientation for torso
 - newindex.m: generate new vertices and faces based on new indices
-- krigingWeights.m: compute the kridging weights
+- krigingWeights.m: compute the kriging weights
 - krigingInterpolation.m: kriging interpolation based on the kriging weights
 - TSP3D: thin plate spline interpolation
 - fun_x1.m, fun_y1.m, fun_zx.m: used in rotate_xyz1.m
@@ -41,7 +41,7 @@ Other scripts:
 - TEM.m: tutte embedding method process 
 - results.jpg: visualization of 2D/3D torso and ventricle generated using the data from the following Quickstart
 
-The S-TVMs tool is available a https://112.124.26.17:7013/visual2D3D
+The S-TVMs tool is available at https://112.124.26.17:7013/visual2D3D
 
 # Quickstart (S-TVMs)
 ## step 1: Data Preparation
