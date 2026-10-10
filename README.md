@@ -22,6 +22,7 @@ Transform subject-specific 3D torso and ventricle geometries into standardized 2
 Main script to use
 - ventricle_2D3D.m: generate 2D (bullseye for whole ventircle, full square plot)and 3D bowl-shaped representation.
 - torso_2D3D.m: generate full square plot and elliptical cylinder representation.
+- ventricle_2D3D_sensitivity.m: generate new standardized ventricles via Monte Carlo perturbation of all four landmarks.
 
 Other scripts:
 - rotate_xyz1.m: achieve standardized position and orientation for torso
@@ -32,6 +33,9 @@ Other scripts:
 - findOpeningTrodeSaveFaces.m: find the opening line for the torso, generate the coordinates for unfolded torso surface.
 - boundaryVerticesAndallLines.m: generate the lines and boundary based on faces
 - boundaryOrder.m: generate the ordered boundary lines and vertices
+- anticlock.m: checks whether a polygon's vertices are ordered counter-clockwise or clockwise and returns 1 or 2
+- area_defined.m: compute the triangle area
+- newB.m: redistributes a set of vertices along a specific axis based on their relative distances
 - results.jpg: visualization of 2D/3D torso and ventricle generated using the data from the following Quickstart
 
 - The S-TVMs tool is available a https://112.124.26.17:7013/visual2D3D
