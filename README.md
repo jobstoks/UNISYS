@@ -29,6 +29,7 @@ Other scripts:
 - newindex.m: generate new vertices and faces based on new indices
 - krigingWeights.m: compute the kridging weights
 - krigingInterpolation.m: kriging interpolation based on the kriging weights
+- TSP3D: thin plate spline interpolation
 - fun_x1.m, fun_y1.m, fun_zx.m: used in rotate_xyz1.m
 - findOpeningTrodeSaveFaces.m: find the opening line for the torso, generate the coordinates for unfolded torso surface.
 - boundaryVerticesAndallLines.m: generate the lines and boundary based on faces
@@ -36,6 +37,8 @@ Other scripts:
 - anticlock.m: checks whether a polygon's vertices are ordered counter-clockwise or clockwise and returns 1 or 2
 - area_defined.m: compute the triangle area
 - newB.m: redistributes a set of vertices along a specific axis based on their relative distances
+- perturb_ventricle_landmarks.m: randomly resamples ventricle landmarks within a physical distance radius
+- TEM.m: tutte embedding method process 
 - results.jpg: visualization of 2D/3D torso and ventricle generated using the data from the following Quickstart
 
 - The S-TVMs tool is available a https://112.124.26.17:7013/visual2D3D
@@ -79,3 +82,6 @@ ventricle_2D3D(mypath,1,50,[540, 790,1139,873], 'potsTikhonov',jet)
 torso_2D3D(mypath, 1,50,[122,12,81,132],'kriging',60,60,70)
 
 
+## Step 3: Generate new ventricle representations based on perturbed landmarks
+
+ventricle_2D3D_sensitivity(mypath,1,50,[540, 790,1139,873], 'potsTikhonov',1,20)
